@@ -1,63 +1,45 @@
-name: LightAntiCheat
-version: '$version'
+name: LightAntiCheat-Plus
+version: '${project.version}'
 main: me.vekster.lightanticheat.Main
 api-version: '1.13'
 folia-supported: true
-softdepend: [ Geyser-Spigot, floodgate, ViaVersion, GSit, mcMMO, ValhallaMMO, VeinMiner, AureliumSkills, ExecutableItems, EnchantsSquared ]
-description: A lightweight and customizable anticheat, designed to detect common hacks.
-authors: [ Vekster, pawsashatoy, Onako2 ]
-website: www.reworlds.net
+softdepend:
+  - Geyser-Spigot
+  - floodgate
+  - ViaVersion
+  - GSit
+  - mcMMO
+  - ValhallaMMO
+  - VeinMiner
+  - AureliumSkills
+  - ExecutableItems
+  - EnchantsSquared
+authors:
+  - ArkFlame Studios
+website: https://github.com/ArkFlame/LightAntiCheat
+description: LightAntiCheat-Plus fork maintained by ArkFlame Studios.
 commands:
   lightanticheat:
-    aliases: [ light, lac, anticheat, ac ]
+    aliases: [light, lac, anticheat, ac]
 permissions:
-  lightanticheat.checks:
-    description: Allows /anticheat checks command
-    default: op
-  lightanticheat.reload:
-    description: Allows /anticheat reload command
-    default: op
-  lightanticheat.alerts.notify:
-    description: See debug messages
-    default: op
-  lightanticheat.alerts.toggle:
-    description: Allows /anticheat alerts command
-    default: op
-  lightanticheat.alerts.teleport:
-    description: Allows /anticheat teleport command
-    default: op
-  lightanticheat.alerts:
-    description: All of the alert permissions
+  lightanticheat.*:
     default: op
     children:
-      lightanticheat.alerts.notify: true
-      lightanticheat.alerts.toggle: true
-      lightanticheat.alerts.teleport: true
+      lightanticheat.alerts: true
+      lightanticheat.client: true
+      lightanticheat.cps: true
+      lightanticheat.tps: true
+      lightanticheat.reload: true
+      lightanticheat.checks: true
+  lightanticheat.alerts:
+    default: op
   lightanticheat.client:
-    description: Allows /anticheat client command
-    default: op
-  lightanticheat.tps:
-    description: Allows /anticheat tps command
-    default: op
-  lightanticheat.ping:
-    description: Allows /anticheat ping command
     default: op
   lightanticheat.cps:
-    description: Allows /anticheat cps command
     default: op
-  lightanticheat.bypass:
-    description: Bypass all the checks
+  lightanticheat.tps:
     default: op
-  lightanticheat.*:
-    description: All of all the above
+  lightanticheat.reload:
     default: op
-    children:
-      lightanticheat.checks: true
-      lightanticheat.reload: true
-      lightanticheat.alerts: true
-      lightanticheat.broadcast: true
-      lightanticheat.client: true
-      lightanticheat.tps: true
-      lightanticheat.ping: true
-      lightanticheat.cps: true
-      lightanticheat.bypass: true
+  lightanticheat.checks:
+    default: op

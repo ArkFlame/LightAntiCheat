@@ -51,7 +51,10 @@ import me.vekster.lightanticheat.check.checks.player.autobot.AutoBotA;
 import me.vekster.lightanticheat.check.checks.player.skinblinker.SkinBlinkerA;
 import me.vekster.lightanticheat.command.LACCommand;
 import me.vekster.lightanticheat.event.LACEventCaller;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventRegistrar;
 import me.vekster.lightanticheat.listener.invalidping.InvalidPingListener;
+import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.listener.unloadedchunk.UnloadedChunkListener;
 import me.vekster.lightanticheat.player.LACPlayerListener;
 import me.vekster.lightanticheat.util.api.ApiUtil;
@@ -88,7 +91,9 @@ public class Main extends JavaPlugin {
         ApiUtil.setApiInstance();
 
         LACPlayerListener.loadLACPlayerListener();
-        registerListener(new LACPlayerListener());
+        LACPlayerListener lacPlayerListener = new LACPlayerListener();
+        registerListener(lacPlayerListener);
+        LACEventRegistrar.register(lacPlayerListener);
 
         ExternalNPCUtil.loadExternalNPCUtil();
 
@@ -105,7 +110,9 @@ public class Main extends JavaPlugin {
         registerListener(new CPSListener());
         ConnectionStabilityListener.loadConnectionCalculatorOnReload();
         ConnectionStabilityListener.loadConnectionCalculator();
-        registerListener(new ConnectionStabilityListener());
+        ConnectionStabilityListener connectionStabilityListener = new ConnectionStabilityListener();
+        registerListener(connectionStabilityListener);
+        LACEventRegistrar.register(connectionStabilityListener);
 
         PluginCommand antiCheatCommand = getCommand("lightanticheat");
         if (antiCheatCommand != null) {
@@ -118,7 +125,6 @@ public class Main extends JavaPlugin {
 
         registerCheckListener(new FlightA());
         registerCheckListener(new FlightB());
-        registerCheckListener(new FlightC());
         registerCheckListener(new FlightC());
         registerCheckListener(new LiquidWalkA());
         registerCheckListener(new LiquidWalkB());
@@ -134,7 +140,6 @@ public class Main extends JavaPlugin {
         registerCheckListener(new SpeedA());
         registerCheckListener(new SpeedB());
         registerCheckListener(new SpeedD());
-        registerCheckListener(new SpeedE());
         registerCheckListener(new SpeedE());
         registerCheckListener(new SpeedF());
         registerCheckListener(new SpeedC());
@@ -181,6 +186,9 @@ public class Main extends JavaPlugin {
     public void onDisable() {
         if (eventCaller != null)
             eventCaller.close();
+        LACEventBus.unregisterAll();
+        Updater.shutdownUpdateChecker();
+        Scheduler.cancelTimer();
     }
 
     public static Main getInstance() {

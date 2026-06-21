@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.arkflame.vendor</groupId>
+    <artifactId>lightinjector</artifactId>
+    <version>1.0.2-arkflame</version>
+    <packaging>jar</packaging>
+    <name>LightInjector ArkFlame vendor fork</name>
+    <description>Project-local vendor artifact for LightAntiCheat-Plus packet injection compatibility.</description>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+        </license>
+    </licenses>
+</project>

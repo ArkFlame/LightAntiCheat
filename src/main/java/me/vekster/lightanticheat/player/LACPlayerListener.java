@@ -480,12 +480,11 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastPowderSnowWalk(LACAsyncPlayerMoveEvent event) {
-        Set<Material> materials = ConcurrentHashMap.newKeySet();
-        materials.addAll(event.getToDownMaterials());
-        materials.addAll(event.getToWithinMaterials());
-        materials.addAll(event.getFromDownMaterials());
-        materials.addAll(event.getFromWithinMaterials());
-        if (!materials.contains(VerUtil.material.get("POWDER_SNOW")))
+        Material powderSnowMaterial = VerUtil.material.get("POWDER_SNOW");
+        if (!event.getToDownMaterials().contains(powderSnowMaterial) &&
+                !event.getToWithinMaterials().contains(powderSnowMaterial) &&
+                !event.getFromDownMaterials().contains(powderSnowMaterial) &&
+                !event.getFromWithinMaterials().contains(powderSnowMaterial))
             return;
 
         Scheduler.runTask(true, () -> {
@@ -650,13 +649,25 @@ public class LACPlayerListener implements Listener {
     }
 
     private static boolean changedDirection(Vector first, Vector second) {
-        Vector difference = first.clone().normalize().subtract(second.clone().normalize());
-        return difference.length() > 1.55;
+        double len1 = Math.sqrt(first.getX() * first.getX() + first.getY() * first.getY() + first.getZ() * first.getZ());
+        double len2 = Math.sqrt(second.getX() * second.getX() + second.getY() * second.getY() + second.getZ() * second.getZ());
+        if (len1 == 0.0 || len2 == 0.0) return false;
+        double nx1 = first.getX() / len1, ny1 = first.getY() / len1, nz1 = first.getZ() / len1;
+        double nx2 = second.getX() / len2, ny2 = second.getY() / len2, nz2 = second.getZ() / len2;
+        double dx = nx1 - nx2, dy = ny1 - ny2, dz = nz1 - nz2;
+        double distSq = dx * dx + dy * dy + dz * dz;
+        return distSq > 1.55D * 1.55D;
     }
 
     private static boolean changedHorizontalDirection(Vector first, Vector second) {
-        Vector difference = first.clone().setY(0).normalize().subtract(second.clone().setY(0).normalize());
-        return difference.length() > 1.35;
+        double len1 = Math.sqrt(first.getX() * first.getX() + first.getZ() * first.getZ());
+        double len2 = Math.sqrt(second.getX() * second.getX() + second.getZ() * second.getZ());
+        if (len1 == 0.0 || len2 == 0.0) return false;
+        double nx1 = first.getX() / len1, nz1 = first.getZ() / len1;
+        double nx2 = second.getX() / len2, nz2 = second.getZ() / len2;
+        double dx = nx1 - nx2, dz = nz1 - nz2;
+        double distSq = dx * dx + dz * dz;
+        return distSq > 1.35D * 1.35D;
     }
 
     private static boolean changedVerticalDirection(Vector first, Vector second) {

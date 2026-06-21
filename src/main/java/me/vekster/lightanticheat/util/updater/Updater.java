@@ -23,9 +23,12 @@ import java.util.Scanner;
 public class Updater implements Listener {
 
     private static String latestVersion;
+    private static Metrics metrics;
 
     public static void loadUpdateChecker() {
-        new Metrics(Main.getInstance(), Main.getStatsId());
+        if (metrics == null) {
+            metrics = new Metrics(Main.getInstance(), Main.getStatsId());
+        }
 
         Scheduler.runTaskTimer(() -> {
             updateLatestVersion();
@@ -42,14 +45,14 @@ public class Updater implements Listener {
             if (latestVersion.equals(Main.getInstance().getDescription().getVersion()))
                 return;
             try {
-                if (Long.parseLong(Main.getInstance().getDescription().getVersion().replaceAll("\\.", "")) >
-                        Long.parseLong(latestVersion.replaceAll("\\.", "")))
+                if (Long.parseLong(Main.getInstance().getDescription().getVersion().replace(".", "")) >
+                        Long.parseLong(latestVersion.replace(".", "")))
                     return;
             } catch (NumberFormatException ignored) {
             }
 
             String message = ConfigManager.Config.UpdateChecker.Notification.Console.message;
-            message = message.replaceAll("%latest-version%", latestVersion);
+            message = PlaceholderConvertor.replacePlaceholder(message, "%latest-version%", latestVersion);
             message = PlaceholderConvertor.colorize(PlaceholderConvertor.swapSome(message,
                     Placeholder.PREFIX, Placeholder.VERSION, Placeholder.TPS), false);
             Bukkit.getConsoleSender().sendMessage(message);
@@ -79,6 +82,14 @@ public class Updater implements Listener {
         });
     }
 
+    public static void shutdownUpdateChecker() {
+        if (metrics == null) {
+            return;
+        }
+        metrics.shutdown();
+        metrics = null;
+    }
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         if (!ConfigManager.Config.enabled || !ConfigManager.Config.UpdateChecker.enabled)
@@ -96,7 +107,7 @@ public class Updater implements Listener {
             return;
 
         String message = ConfigManager.Config.UpdateChecker.Notification.OnJoin.message;
-        message = message.replaceAll("%latest-version%", latestVersion);
+        message = PlaceholderConvertor.replacePlaceholder(message, "%latest-version%", latestVersion);
         message = PlaceholderConvertor.colorize(PlaceholderConvertor.swapSome(message,
                 Placeholder.PREFIX, Placeholder.VERSION, Placeholder.TPS), true);
         player.sendMessage(message);

@@ -333,6 +333,7 @@ public class VerUtil {
                 };
                 break;
             case V1_20:
+            case V1_21:
                 multiVersion = new V1_20(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {

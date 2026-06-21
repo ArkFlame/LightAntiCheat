@@ -3,6 +3,8 @@ package me.vekster.lightanticheat.check;
 import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.api.event.LACViolationEvent;
 import me.vekster.lightanticheat.check.buffer.Buffer;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventRegistrar;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
 import me.vekster.lightanticheat.util.config.ConfigManager;
@@ -55,11 +57,11 @@ public abstract class Check extends CheckUtil {
 
     public static void registerListener(CheckName name, Listener listener) {
         CheckSetting checkSetting = getCheckSetting(name);
+        HandlerList.unregisterAll(listener);
+        LACEventBus.unregister(listener);
         if (checkSetting.enabled && ConfigManager.Config.enabled) {
-            HandlerList.unregisterAll(listener);
             Bukkit.getServer().getPluginManager().registerEvents(listener, Main.getInstance());
-        } else {
-            HandlerList.unregisterAll(listener);
+            LACEventRegistrar.register(listener);
         }
         CHECK_LISTENERS.put(name, listener);
     }

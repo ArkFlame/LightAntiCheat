@@ -1,0 +1,15 @@
+package me.vekster.lightanticheat.event.bus;
+
+public enum LACEventType {
+
+    ASYNC_PACKET_RECEIVE,
+    PLAYER_MOVE,
+    ASYNC_PLAYER_MOVE,
+    PLAYER_ATTACK,
+    ASYNC_PLAYER_ATTACK,
+    PLAYER_PLACE_BLOCK,
+    ASYNC_PLAYER_PLACE_BLOCK,
+    PLAYER_BREAK_BLOCK,
+    ASYNC_PLAYER_BREAK_BLOCK
+
+}

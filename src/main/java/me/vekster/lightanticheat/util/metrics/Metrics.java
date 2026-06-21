@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import me.vekster.lightanticheat.util.config.ConfigManager;
+import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -85,10 +86,10 @@ public class Metrics {
                         "bukkit",
                         serverUUID,
                         serviceId,
-                        enabled || ConfigManager.Config.Bstats.enabled,
+                        enabled && ConfigManager.Config.Bstats.enabled,
                         this::appendPlatformData,
                         this::appendServiceData,
-                        submitDataTask -> Bukkit.getScheduler().runTask(plugin, submitDataTask),
+                        submitDataTask -> Scheduler.runTask(false, submitDataTask),
                         plugin::isEnabled,
                         (message, error) -> this.plugin.getLogger().log(Level.WARNING, message, error),
                         (message) -> this.plugin.getLogger().log(Level.INFO, message),

@@ -31,3 +31,8 @@ local.properties
 
 # destinationPath config
 gradle.properties
+
+# Maven
+target/
+dependency-reduced-pom.xml
+*.class

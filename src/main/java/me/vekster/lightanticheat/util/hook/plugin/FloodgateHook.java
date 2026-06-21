@@ -11,15 +11,28 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
-import org.geysermc.floodgate.api.FloodgateApi;
+
+import java.lang.reflect.Method;
+import java.util.UUID;
 
 public class FloodgateHook {
 
     private static PluginManager pluginManager;
     private static final String PLUGIN_NAME = "floodgate";
-
+    private static boolean enabled;
+    private static boolean available;
+    private static Object floodgateApi;
+    private static Method isFloodgatePlayerMethod;
+    private static Method getPlayerMethod;
+    private static Method getDeviceOsMethod;
     public static void loadFloodgateHook() {
         pluginManager = Main.getInstance().getServer().getPluginManager();
+        reload();
+    }
+
+    public static void reload() {
+        enabled = ConfigManager.Config.GeyserHook.Floodgate.enabled;
+        loadFloodgateApi();
     }
 
     public static boolean isBedrockPlayerWithoutCache(Player player) {
@@ -28,17 +41,24 @@ public class FloodgateHook {
         if (ConfigManager.Config.GeyserHook.UUID.enabled &&
                 player.getUniqueId().toString().startsWith("000000"))
             return true;
-        if (ConfigManager.Config.GeyserHook.Prefix.enabled && player.getUniqueId().toString()
-                .startsWith(ConfigManager.Config.GeyserHook.Prefix.prefixString))
+        final String configuredPrefix = ConfigManager.Config.GeyserHook.Prefix.prefixString;
+        if (ConfigManager.Config.GeyserHook.Prefix.enabled && configuredPrefix != null && !configuredPrefix.isEmpty()
+                && player.getName().startsWith(configuredPrefix))
             return true;
 
-        if (!ConfigManager.Config.GeyserHook.Floodgate.enabled || pluginManager.getPlugin(PLUGIN_NAME) == null)
+        if (!enabled || pluginManager.getPlugin(PLUGIN_NAME) == null)
             return false;
-        try {
-            return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
-        } catch (NoClassDefFoundError e) {
-            return false;
+        if (available) {
+            try {
+                final Object result = isFloodgatePlayerMethod.invoke(floodgateApi, player.getUniqueId());
+                return result instanceof Boolean && (Boolean) result;
+            } catch (final ReflectiveOperationException exception) {
+                available = false;
+                Main.getInstance().getLogger().warning("Floodgate reflection hook failed. Falling back to prefix/UUID detection.");
+            }
         }
+        final String prefix = ConfigManager.Config.GeyserHook.Prefix.prefixString;
+        return prefix != null && !prefix.isEmpty() && player.getName().startsWith(prefix);
     }
 
     public static boolean isBedrockPlayer(Player player) {
@@ -55,23 +75,35 @@ public class FloodgateHook {
         if (!isBedrockPlayer(player, async))
             return false;
 
-        if (!ConfigManager.Config.GeyserHook.Floodgate.enabled || pluginManager.getPlugin(PLUGIN_NAME) == null)
+        if (!enabled || pluginManager.getPlugin(PLUGIN_NAME) == null)
+            return true;
+        if (!available)
             return true;
         try {
-            if (!FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId()))
+            final Object result = isFloodgatePlayerMethod.invoke(floodgateApi, player.getUniqueId());
+            if (!(result instanceof Boolean) || !(Boolean) result)
                 return true;
-            if (FloodgateApi.getInstance().getPlayer(player.getUniqueId()).getDeviceOs() == null)
+            final Object floodgatePlayer = getPlayerMethod.invoke(floodgateApi, player.getUniqueId());
+            if (floodgatePlayer == null)
                 return true;
-        } catch (NoClassDefFoundError e) {
+            if (getDeviceOsMethod == null) {
+                getDeviceOsMethod = floodgatePlayer.getClass().getMethod("getDeviceOs");
+            }
+            final Object device = getDeviceOsMethod.invoke(floodgatePlayer);
+            if (device == null)
+                return true;
+            String deviceOs = device.toString();
+            if (deviceOs.equals("UNKNOWN") || deviceOs.equals("GOOGLE") || deviceOs.equals("IOS") ||
+                    deviceOs.equals("AMAZON") || deviceOs.equals("GEARVR") || deviceOs.equals("TVOS") ||
+                    deviceOs.equals("PS4") || deviceOs.equals("NX") || deviceOs.equals("XBOX") ||
+                    deviceOs.equals("WINDOWS_PHONE"))
+                return true;
+            return false;
+        } catch (final ReflectiveOperationException exception) {
+            available = false;
+            Main.getInstance().getLogger().warning("Floodgate device lookup failed. Falling back to UNKNOWN.");
             return true;
         }
-        String deviceOs = FloodgateApi.getInstance().getPlayer(player.getUniqueId()).getDeviceOs().name();
-        if (deviceOs.equals("UNKNOWN") || deviceOs.equals("GOOGLE") || deviceOs.equals("IOS") ||
-                deviceOs.equals("AMAZON") || deviceOs.equals("GEARVR") || deviceOs.equals("TVOS") ||
-                deviceOs.equals("PS4") || deviceOs.equals("NX") || deviceOs.equals("XBOX") ||
-                deviceOs.equals("WINDOWS_PHONE"))
-            return true;
-        return false;
     }
 
     public static boolean isProbablyPocketEditionPlayer(Player player) {
@@ -109,4 +141,26 @@ public class FloodgateHook {
         return false;
     }
 
+    private static void loadFloodgateApi() {
+        available = false;
+        floodgateApi = null;
+        isFloodgatePlayerMethod = null;
+        getPlayerMethod = null;
+        getDeviceOsMethod = null;
+
+        if (!enabled || pluginManager.getPlugin(PLUGIN_NAME) == null) {
+            return;
+        }
+        try {
+            final Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            final Method getInstanceMethod = apiClass.getMethod("getInstance");
+            floodgateApi = getInstanceMethod.invoke(null);
+            isFloodgatePlayerMethod = apiClass.getMethod("isFloodgatePlayer", UUID.class);
+            getPlayerMethod = apiClass.getMethod("getPlayer", UUID.class);
+            available = floodgateApi != null;
+        } catch (final ReflectiveOperationException exception) {
+            available = false;
+            Main.getInstance().getLogger().warning("Floodgate plugin is installed but API reflection failed. Falling back to prefix/UUID detection.");
+        }
+    }
 }

@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class PlaceholderConvertor {
 
@@ -32,31 +33,38 @@ public class PlaceholderConvertor {
         return ColorUtil.colorize(text, customColor);
     }
 
+    public static String replacePlaceholder(String text, String placeholder, Object value) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return text.replace(placeholder, Objects.toString(value, ""));
+    }
+
     public static String swapAll(String text, CheckSetting checkSetting, Player player, LACPlayer lacPlayer) {
         long currentTime = System.currentTimeMillis();
         InetSocketAddress address = player.getAddress();
         text = swapConnectionStability(text, player);
         text = swapCoordinates(text, player, "#0.00");
-        text = text.replaceAll("%prefix%", ConfigManager.Config.Messages.prefix)
-                .replaceAll("%version%", Main.getInstance().getDescription().getVersion())
-                .replaceAll("%check%", checkSetting.name.title)
-                .replaceAll("%check-type%", checkSetting.name.type.toString().toUpperCase().charAt(0)
-                        + checkSetting.name.type.toString().toLowerCase().substring(1))
-                .replaceAll("%check-description%", checkSetting.name.description)
-                .replaceAll("%vio%", String.valueOf(lacPlayer.violations.getViolations(checkSetting.name)))
-                .replaceAll("%punishment-vio%", String.valueOf(checkSetting.punishmentVio))
-                .replaceAll("%setback-vio%", String.valueOf(checkSetting.setbackVio))
-                .replaceAll("%tps%", formatDecimalFraction("#0.00", Math.min(TPSCalculator.getTPS(), 20.0)))
-                .replaceAll("%ping%", String.valueOf(VerPlayer.getPing(player)))
-                .replaceAll("%edition%", FloodgateHook.isBedrockPlayer(player) ? "Bedrock" : "Java")
-                .replaceAll("%name%", player.getName())
-                .replaceAll("%uuid%", player.getUniqueId().toString())
-                .replaceAll("%ip%", address != null ? address.getAddress().toString().substring(1) : "none")
-                .replaceAll("%client-brand%", ClientBrandRecognizer.getClientBrand(player))
-                .replaceAll("%date-sec%", SEC_FORMAT.format(new Date(currentTime)))
-                .replaceAll("%date-min%", MIN_FORMAT.format(new Date(currentTime)))
-                .replaceAll("%date-hrs%", HRS_FORMAT.format(new Date(currentTime)))
-                .replaceAll("%date-day%", DAY_FORMAT.format(new Date(currentTime)));
+        text = replacePlaceholder(text, "%prefix%", ConfigManager.Config.Messages.prefix);
+        text = replacePlaceholder(text, "%version%", Main.getInstance().getDescription().getVersion());
+        text = replacePlaceholder(text, "%check%", checkSetting.name.title);
+        text = replacePlaceholder(text, "%check-type%", checkSetting.name.type.toString().toUpperCase().charAt(0)
+                + checkSetting.name.type.toString().toLowerCase().substring(1));
+        text = replacePlaceholder(text, "%check-description%", checkSetting.name.description);
+        text = replacePlaceholder(text, "%vio%", String.valueOf(lacPlayer.violations.getViolations(checkSetting.name)));
+        text = replacePlaceholder(text, "%punishment-vio%", String.valueOf(checkSetting.punishmentVio));
+        text = replacePlaceholder(text, "%setback-vio%", String.valueOf(checkSetting.setbackVio));
+        text = replacePlaceholder(text, "%tps%", formatDecimalFraction("#0.00", Math.min(TPSCalculator.getTPS(), 20.0)));
+        text = replacePlaceholder(text, "%ping%", String.valueOf(VerPlayer.getPing(player)));
+        text = replacePlaceholder(text, "%edition%", FloodgateHook.isBedrockPlayer(player) ? "Bedrock" : "Java");
+        text = replacePlaceholder(text, "%name%", player.getName());
+        text = replacePlaceholder(text, "%uuid%", player.getUniqueId().toString());
+        text = replacePlaceholder(text, "%ip%", address != null ? address.getAddress().toString().substring(1) : "none");
+        text = replacePlaceholder(text, "%client-brand%", ClientBrandRecognizer.getClientBrand(player));
+        text = replacePlaceholder(text, "%date-sec%", SEC_FORMAT.format(new Date(currentTime)));
+        text = replacePlaceholder(text, "%date-min%", MIN_FORMAT.format(new Date(currentTime)));
+        text = replacePlaceholder(text, "%date-hrs%", HRS_FORMAT.format(new Date(currentTime)));
+        text = replacePlaceholder(text, "%date-day%", DAY_FORMAT.format(new Date(currentTime)));
         return text;
     }
 
@@ -64,21 +72,21 @@ public class PlaceholderConvertor {
         for (Placeholder placeholder : placeholders) {
             switch (placeholder) {
                 case PREFIX:
-                    text = text.replaceAll("%prefix%", ConfigManager.Config.Messages.prefix);
+                    text = replacePlaceholder(text, "%prefix%", ConfigManager.Config.Messages.prefix);
                     break;
                 case VERSION:
-                    text = text.replaceAll("%version%", Main.getInstance().getDescription().getVersion());
+                    text = replacePlaceholder(text, "%version%", Main.getInstance().getDescription().getVersion());
                     break;
                 case TPS:
-                    text = text.replaceAll("%tps%", new DecimalFormat("#0.00")
+                    text = replacePlaceholder(text, "%tps%", new DecimalFormat("#0.00")
                             .format(Math.min(TPSCalculator.getTPS(), 20.0)));
                     break;
                 case DATA:
                     long time = System.currentTimeMillis();
-                    text = text.replaceAll("%date-sec%", SEC_FORMAT.format(new Date(time)))
-                            .replaceAll("%date-min%", MIN_FORMAT.format(new Date(time)))
-                            .replaceAll("%date-hrs%", HRS_FORMAT.format(new Date(time)))
-                            .replaceAll("%date-day%", DAY_FORMAT.format(new Date(time)));
+                    text = replacePlaceholder(text, "%date-sec%", SEC_FORMAT.format(new Date(time)));
+                    text = replacePlaceholder(text, "%date-min%", MIN_FORMAT.format(new Date(time)));
+                    text = replacePlaceholder(text, "%date-hrs%", HRS_FORMAT.format(new Date(time)));
+                    text = replacePlaceholder(text, "%date-day%", DAY_FORMAT.format(new Date(time)));
                     break;
             }
         }
@@ -92,10 +100,10 @@ public class PlaceholderConvertor {
     private static String swapConnectionStability(String text, Player player) {
         ConnectionStability connectionStability = ConnectionStabilityListener.getConnectionStability(player);
         if (connectionStability == ConnectionStability.LOW)
-            return text.replaceAll("%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.low);
+            return replacePlaceholder(text, "%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.low);
         if (connectionStability == ConnectionStability.MEDIUM)
-            return text.replaceAll("%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.medium);
-        text = text.replaceAll("%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.high);
+            return replacePlaceholder(text, "%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.medium);
+        text = replacePlaceholder(text, "%connection-stability%", ConfigManager.Config.Messages.CommandMessages.Ping.ConnectionStability.high);
         return text;
     }
 
@@ -103,10 +111,10 @@ public class PlaceholderConvertor {
         Location location = player.getLocation();
         World world = AsyncUtil.getWorld(player);
         if (world == null) world = player.getWorld();
-        text = text.replaceAll("%world%", world.getName())
-                .replaceAll("%x%", formatDecimalFraction(format, location.getX()))
-                .replaceAll("%y%", formatDecimalFraction(format, location.getY()))
-                .replaceAll("%z%", formatDecimalFraction(format, location.getZ()));
+        text = replacePlaceholder(text, "%world%", world.getName());
+        text = replacePlaceholder(text, "%x%", formatDecimalFraction(format, location.getX()));
+        text = replacePlaceholder(text, "%y%", formatDecimalFraction(format, location.getY()));
+        text = replacePlaceholder(text, "%z%", formatDecimalFraction(format, location.getZ()));
         return text;
     }
 
@@ -114,11 +122,11 @@ public class PlaceholderConvertor {
         InetSocketAddress address = player.getAddress();
         text = swapConnectionStability(text, player);
         text = swapCoordinates(text, player, "#0.00");
-        text = text.replaceAll("%ping%", String.valueOf(VerPlayer.getPing(player)))
-                .replaceAll("%name%", player.getName())
-                .replaceAll("%uuid%", player.getUniqueId().toString())
-                .replaceAll("%ip%", address != null ? address.getAddress().toString().substring(1) : "none")
-                .replaceAll("%client-brand%", ClientBrandRecognizer.getClientBrand(player));
+        text = replacePlaceholder(text, "%ping%", String.valueOf(VerPlayer.getPing(player)));
+        text = replacePlaceholder(text, "%name%", player.getName());
+        text = replacePlaceholder(text, "%uuid%", player.getUniqueId().toString());
+        text = replacePlaceholder(text, "%ip%", address != null ? address.getAddress().toString().substring(1) : "none");
+        text = replacePlaceholder(text, "%client-brand%", ClientBrandRecognizer.getClientBrand(player));
         return text;
     }
 

@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ public class BlockCache {
 
     public BlockCache(Player player, Location location) {
         this.withinBlocks = CheckUtil.getWithinBlocks(player, location);
-        this.withinMaterials = new HashSet<>();
+        this.withinMaterials = EnumSet.noneOf(Material.class);
         boolean toWithinBlocksPassable = true;
         for (Block block : this.withinBlocks) {
             this.withinMaterials.add(block.getType());
@@ -23,7 +24,7 @@ public class BlockCache {
         this.withinBlocksPassable = toWithinBlocksPassable;
 
         this.downBlocks = CheckUtil.getDownBlocks(player, location, 0.21);
-        this.downMaterials = new HashSet<>();
+        this.downMaterials = EnumSet.noneOf(Material.class);
         boolean toDownBlocksPassable = true;
         for (Block block : this.downBlocks) {
             this.downMaterials.add(block.getType());

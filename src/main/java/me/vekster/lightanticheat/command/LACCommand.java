@@ -35,7 +35,7 @@ public class LACCommand implements TabExecutor {
 
     private static String getInvalidFormatError(String usage, boolean hex) {
         String invalidFormatError = ConfigManager.Config.Messages.ErrorMessages.invalidFormat;
-        invalidFormatError = invalidFormatError.replaceAll("%usage%", usage);
+        invalidFormatError = PlaceholderConvertor.replacePlaceholder(invalidFormatError, "%usage%", usage);
         invalidFormatError = PlaceholderConvertor.swapSome(invalidFormatError, SERVER_PLACEHOLDERS);
         invalidFormatError = PlaceholderConvertor.colorize(invalidFormatError, hex);
         return invalidFormatError;
@@ -66,7 +66,7 @@ public class LACCommand implements TabExecutor {
                     return true;
                 }
                 String message = ConfigManager.Config.Messages.CommandMessages.Client.message;
-                message = message.replaceAll("%client%", ClientBrandRecognizer.getClientBrand(player));
+                message = PlaceholderConvertor.replacePlaceholder(message, "%client%", ClientBrandRecognizer.getClientBrand(player));
                 message = PlaceholderConvertor.swapSome(message, SERVER_PLACEHOLDERS);
                 message = PlaceholderConvertor.swapPlayer(message, player);
                 message = PlaceholderConvertor.colorize(message, hex);
@@ -89,7 +89,7 @@ public class LACCommand implements TabExecutor {
                     return true;
                 }
                 String message = ConfigManager.Config.Messages.CommandMessages.Cps.message;
-                message = message.replaceAll("%cps%", String.valueOf(CPSListener.getCps(player)));
+                message = PlaceholderConvertor.replacePlaceholder(message, "%cps%", String.valueOf(CPSListener.getCps(player)));
                 message = PlaceholderConvertor.swapSome(message, SERVER_PLACEHOLDERS);
                 message = PlaceholderConvertor.swapPlayer(message, player);
                 message = PlaceholderConvertor.colorize(message, hex);
@@ -105,7 +105,7 @@ public class LACCommand implements TabExecutor {
                 long startTime = System.currentTimeMillis();
                 ConfigManager.reloadConfig();
                 String message = ConfigManager.Config.Messages.CommandMessages.Reload.message;
-                message = message.replaceAll("%time%", String.valueOf(System.currentTimeMillis() - startTime));
+                message = PlaceholderConvertor.replacePlaceholder(message, "%time%", String.valueOf(System.currentTimeMillis() - startTime));
                 message = PlaceholderConvertor.swapSome(message, SERVER_PLACEHOLDERS);
                 message = PlaceholderConvertor.colorize(message, hex);
                 sender.sendMessage(message);
@@ -131,9 +131,9 @@ public class LACCommand implements TabExecutor {
                     CHECKS.put(checkName.type, stringBuilder);
                 }
                 String message = ConfigManager.Config.Messages.CommandMessages.Checks.message;
-                message = message.replaceAll("%checks%", all.substring(0, all.length() - 2) + "§r");
+                message = PlaceholderConvertor.replacePlaceholder(message, "%checks%", all.substring(0, all.length() - 2) + "§r");
                 for (CheckName.CheckType checkType : CHECKS.keySet()) {
-                    message = message.replaceAll("%" + checkType.toString().toLowerCase() + "_checks%",
+                    message = PlaceholderConvertor.replacePlaceholder(message, "%" + checkType.toString().toLowerCase() + "_checks%",
                             CHECKS.get(checkType).substring(0, CHECKS.get(checkType).length() - 2) + "§r");
                 }
 

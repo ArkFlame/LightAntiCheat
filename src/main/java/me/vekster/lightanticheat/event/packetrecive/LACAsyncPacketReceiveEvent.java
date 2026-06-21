@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.event.packetrecive;
 
+import me.vekster.lightanticheat.event.packetrecive.packettype.PacketRecognitionResult;
 import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
 import me.vekster.lightanticheat.event.packetrecive.packettype.PacketTypeRecognizer;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -20,8 +21,9 @@ public class LACAsyncPacketReceiveEvent extends Event {
 
         this.player = player;
         this.lacPlayer = lacPlayer;
-        this.packetType = PacketTypeRecognizer.getPacketType(nmsPacket);
-        this.entityId = PacketTypeRecognizer.getEntityId(nmsPacket);
+        PacketRecognitionResult result = PacketTypeRecognizer.recognize(nmsPacket);
+        this.packetType = result.getPacketType();
+        this.entityId = result.getEntityId();
     }
 
     public Player getPlayer() {

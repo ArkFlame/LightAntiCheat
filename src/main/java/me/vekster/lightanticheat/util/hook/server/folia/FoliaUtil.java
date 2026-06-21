@@ -1,50 +1,46 @@
 package me.vekster.lightanticheat.util.hook.server.folia;
 
-import com.tcoded.folialib.FoliaLib;
 import me.vekster.lightanticheat.Main;
-import me.vekster.lightanticheat.util.async.AsyncUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.lang.reflect.Method;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-public class FoliaUtil {
-
+public final class FoliaUtil {
     private static boolean folia;
-    private static FoliaLib foliaLib;
-    private static Map<UUID, List<FLocation>> players = new ConcurrentHashMap<>();
+    private static Method getGlobalRegionSchedulerMethod;
+    private static Method getAsyncSchedulerMethod;
+    private static Method getRegionSchedulerMethod;
+    private static Method entityGetSchedulerMethod;
+    private static Method entityTeleportAsyncMethod;
+
+    private FoliaUtil() {
+    }
 
     public static void loadFoliaUtil() {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
-            folia = true;
-        } catch (ClassNotFoundException e) {
-            folia = false;
+        folia = classExists("io.papermc.paper.threadedregions.RegionizedServer");
+        if (!folia) {
+            clearMethods();
+            return;
         }
-
-        if (isFolia()) {
-            foliaLib = new FoliaLib(Main.getInstance());
-
-            runTaskTimer(() -> {
-                Map<UUID, List<FLocation>> players = new ConcurrentHashMap<>();
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    List<FLocation> locations = Collections.synchronizedList(new ArrayList<>(FoliaUtil.players
-                            .getOrDefault(player.getUniqueId(), Collections.emptyList())));
-                    if (locations.isEmpty()) {
-                        FLocation[] fLocationArray = new FLocation[30];
-                        Arrays.fill(fLocationArray, new FLocation(player));
-                        locations = Collections.synchronizedList(new ArrayList<>(Arrays.asList(fLocationArray)));
-                    }
-                    locations.add(new FLocation(player));
-                    locations.remove(0);
-                    players.put(player.getUniqueId(), locations);
-                }
-                FoliaUtil.players = players;
-            }, 1, 1);
+        try {
+            getGlobalRegionSchedulerMethod = Bukkit.getServer().getClass().getMethod("getGlobalRegionScheduler");
+            getAsyncSchedulerMethod = Bukkit.getServer().getClass().getMethod("getAsyncScheduler");
+            getRegionSchedulerMethod = Bukkit.getServer().getClass().getMethod("getRegionScheduler");
+            entityGetSchedulerMethod = Entity.class.getMethod("getScheduler");
+            entityTeleportAsyncMethod = Entity.class.getMethod("teleportAsync", Location.class);
+        } catch (final ReflectiveOperationException exception) {
+            folia = false;
+            clearMethods();
+            Main.getInstance().getLogger().warning("Folia detected but scheduler API is unavailable. Falling back to Bukkit scheduler bridge.");
         }
     }
 
@@ -52,90 +48,139 @@ public class FoliaUtil {
         return folia;
     }
 
-    public static boolean isStable(Player player) {
-        if (!isFolia())
-            return true;
-        List<FLocation> fLocations = players.getOrDefault(player.getUniqueId(), null);
-        if (fLocations == null)
-            return false;
-        World world = AsyncUtil.getWorld(player);
-        if (world == null) world = player.getWorld();
-        String worldName = world.getName();
-        Location location = player.getLocation();
-        double x = location.getX();
-        double z = location.getZ();
-        FLocation prevFLoc = null;
-        for (int i = fLocations.size() - 1; i >= 0; i--) {
-            FLocation fLocation = fLocations.get(i);
-            if (!fLocation.world.equals(worldName))
-                return false;
-            if (prevFLoc == null) {
-                if (Math.sqrt(Math.pow(x - fLocation.x, 2) + Math.pow(z - fLocation.z, 2)) >= 32)
-                    return false;
-            } else {
-                if (Math.sqrt(Math.pow(prevFLoc.x - fLocation.x, 2) + Math.pow(prevFLoc.z - fLocation.z, 2)) >= 32)
-                    return false;
+    public static boolean isStable(final Player player) {
+        return player != null && player.isOnline();
+    }
+
+    public static void runTask(final Runnable runnable) {
+        Objects.requireNonNull(runnable, "runnable");
+        invokeGlobal("run", new Class<?>[]{Plugin.class, Consumer.class}, plugin(), (Consumer<Object>) ignored -> runnable.run());
+    }
+
+    public static void runTask(final Entity entity, final Runnable runnable) {
+        Objects.requireNonNull(entity, "entity");
+        Objects.requireNonNull(runnable, "runnable");
+        invokeEntity(entity, "execute", new Class<?>[]{Plugin.class, Runnable.class, Runnable.class, long.class}, plugin(), runnable, null, 1L);
+    }
+
+    public static void runTaskAsynchronously(final Runnable runnable) {
+        Objects.requireNonNull(runnable, "runnable");
+        invokeAsync("runNow", new Class<?>[]{Plugin.class, Consumer.class}, plugin(), (Consumer<Object>) ignored -> runnable.run());
+    }
+
+    public static void runTaskLater(final Runnable runnable, final long delay) {
+        Objects.requireNonNull(runnable, "runnable");
+        invokeGlobal("runDelayed", new Class<?>[]{Plugin.class, Consumer.class, long.class}, plugin(), (Consumer<Object>) ignored -> runnable.run(), Math.max(1L, delay));
+    }
+
+    public static void runTaskLater(final Entity entity, final Runnable runnable, final long delay) {
+        Objects.requireNonNull(entity, "entity");
+        Objects.requireNonNull(runnable, "runnable");
+        invokeEntity(entity, "execute", new Class<?>[]{Plugin.class, Runnable.class, Runnable.class, long.class}, plugin(), runnable, null, Math.max(1L, delay));
+    }
+
+    public static void runTaskLaterAsynchronously(final Runnable runnable, final long delay) {
+        Objects.requireNonNull(runnable, "runnable");
+        invokeAsync("runDelayed", new Class<?>[]{Plugin.class, Consumer.class, long.class, TimeUnit.class}, plugin(), (Consumer<Object>) ignored -> runnable.run(), ticksToMillis(delay), TimeUnit.MILLISECONDS);
+    }
+
+    public static void runTaskTimer(final Runnable task, final long delay, final long period) {
+        Objects.requireNonNull(task, "task");
+        invokeGlobal("runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, long.class, long.class}, plugin(), (Consumer<Object>) ignored -> task.run(), Math.max(1L, delay), Math.max(1L, period));
+    }
+
+    public static void runTaskTimer(final Entity entity, final Runnable task, final long delay, final long period) {
+        Objects.requireNonNull(entity, "entity");
+        Objects.requireNonNull(task, "task");
+        invokeEntity(entity, "runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, Runnable.class, long.class, long.class}, plugin(), (Consumer<Object>) ignored -> task.run(), null, Math.max(1L, delay), Math.max(1L, period));
+    }
+
+    public static void runTaskTimerAsynchronously(final Runnable task, final long delay, final long period) {
+        Objects.requireNonNull(task, "task");
+        invokeAsync("runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, long.class, long.class, TimeUnit.class}, plugin(), (Consumer<Object>) ignored -> task.run(), ticksToMillis(delay), ticksToMillis(period), TimeUnit.MILLISECONDS);
+    }
+
+    public static void teleportPlayer(final Player player, final Location location) {
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(location, "location");
+        if (!folia) {
+            player.teleport(location);
+            return;
+        }
+        try {
+            entityTeleportAsyncMethod.invoke(player, location);
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia teleportAsync for " + player.getName() + ".");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static CompletableFuture<Boolean> teleportPlayerAsync(final Player player, final Location location) {
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(location, "location");
+        if (!folia) {
+            return CompletableFuture.completedFuture(player.teleport(location));
+        }
+        try {
+            final Object result = entityTeleportAsyncMethod.invoke(player, location);
+            if (result instanceof CompletableFuture) {
+                return (CompletableFuture<Boolean>) result;
             }
-            prevFLoc = fLocation;
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia teleportAsync for " + player.getName() + ".");
         }
-        return true;
+        return CompletableFuture.completedFuture(false);
     }
 
-    public static void runTask(Runnable runnable) {
-        foliaLib.getImpl().runNextTick(wrappedTask -> runnable.run());
+    private static Plugin plugin() {
+        return Main.getInstance();
     }
 
-    public static void runTask(Entity entity, Runnable runnable) {
-        foliaLib.getImpl().runAtEntity(entity, wrappedTask -> runnable.run());
+    private static long ticksToMillis(final long ticks) {
+        return Math.max(1L, ticks) * 50L;
     }
 
-    public static void runTaskAsynchronously(Runnable runnable) {
-        foliaLib.getImpl().runAsync(wrappedTask -> runnable.run());
-    }
-
-
-    public static void runTaskLater(Runnable runnable, long delayInTicks) {
-        foliaLib.getImpl().runLater(runnable, delayInTicks);
-    }
-
-    public static void runTaskLater(Entity entity, Runnable runnable, long delayInTicks) {
-        foliaLib.getImpl().runAtEntityLater(entity, runnable, delayInTicks);
-    }
-
-    public static void runTaskLaterAsynchronously(Runnable runnable, long delayInTicks) {
-        foliaLib.getImpl().runLaterAsync(runnable, delayInTicks);
-    }
-
-    public static void runTaskTimer(Runnable task, long delayInTicks, long periodInTicks) {
-        foliaLib.getImpl().runTimer(task, delayInTicks, periodInTicks);
-    }
-
-    public static void runTaskTimer(Entity entity, Runnable task, long delayInTicks, long periodInTicks) {
-        foliaLib.getImpl().runAtEntityTimer(entity, task, delayInTicks, periodInTicks);
-    }
-
-    public static void runTaskTimerAsynchronously(Runnable task, long delayInTicks, long periodInTicks) {
-        foliaLib.getImpl().runTimerAsync(task, delayInTicks, periodInTicks);
-    }
-
-    public static void teleportPlayer(Player player, Location location) {
-        if (!isFolia()) player.teleport(location);
-        else foliaLib.getImpl().teleportAsync(player, location);
-    }
-
-    public static class FLocation {
-        public FLocation(Player player) {
-            Location location = player.getLocation();
-            World world1 = AsyncUtil.getWorld(player);
-            if (world1 == null) world1 = player.getWorld();
-            this.world = world1.getName();
-            this.x = location.getX();
-            this.z = location.getZ();
+    private static void invokeGlobal(final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+        try {
+            final Object scheduler = getGlobalRegionSchedulerMethod.invoke(Bukkit.getServer());
+            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia global scheduler method " + methodName + ".");
         }
-
-        public String world;
-        public double x;
-        public double z;
     }
 
+    private static void invokeAsync(final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+        try {
+            final Object scheduler = getAsyncSchedulerMethod.invoke(Bukkit.getServer());
+            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia async scheduler method " + methodName + ".");
+        }
+    }
+
+    private static void invokeEntity(final Entity entity, final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+        try {
+            final Object scheduler = entityGetSchedulerMethod.invoke(entity);
+            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia entity scheduler method " + methodName + " for entity " + entity.getUniqueId() + ".");
+        }
+    }
+
+    private static boolean classExists(final String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (final ClassNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    private static void clearMethods() {
+        getGlobalRegionSchedulerMethod = null;
+        getAsyncSchedulerMethod = null;
+        getRegionSchedulerMethod = null;
+        entityGetSchedulerMethod = null;
+        entityTeleportAsyncMethod = null;
+    }
 }

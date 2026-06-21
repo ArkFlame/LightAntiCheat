@@ -39,10 +39,10 @@ public class ComponentUtil {
         if (!clickMessage.isEmpty()) {
             World world = AsyncUtil.getWorld(violator);
             if (world == null) world = violator.getWorld();
-            clickMessage = PlaceholderConvertor.swapPlayer(clickMessage.replaceAll(
-                            "%teleport-location%", world.getName() + " " +
-                                    location.getX() + " " + location.getY() + " " + location.getZ() + " " +
-                                    location.getYaw() + " " + location.getPitch()),
+            clickMessage = PlaceholderConvertor.swapPlayer(
+                    PlaceholderConvertor.replacePlaceholder(clickMessage, "%teleport-location%",
+                            world.getName() + " " + location.getX() + " " + location.getY() + " " + location.getZ() + " " +
+                            location.getYaw() + " " + location.getPitch()),
                     violator);
         }
         lines.add(clickMessage);

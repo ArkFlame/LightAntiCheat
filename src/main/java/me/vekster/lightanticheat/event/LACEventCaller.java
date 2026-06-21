@@ -3,6 +3,8 @@ package me.vekster.lightanticheat.event;
 import com.fren_gor.lightInjector.LightInjector;
 import io.netty.channel.Channel;
 import me.vekster.lightanticheat.Main;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
 import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
@@ -21,24 +23,16 @@ import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.identifier.LACVersion;
 import me.vekster.lightanticheat.version.identifier.VerIdentifier;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.plugin.PluginManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LACEventCaller extends LightInjector implements Listener {
-
-    private static final PluginManager PLUGIN_MANAGER;
-
-    static {
-        PLUGIN_MANAGER = Bukkit.getServer().getPluginManager();
-    }
 
     public LACEventCaller() {
         super(Main.getInstance());
@@ -55,9 +49,9 @@ public class LACEventCaller extends LightInjector implements Listener {
         Scheduler.entityThread(player, () -> {
             if (!FoliaUtil.isStable(player))
                 return;
-            PLUGIN_MANAGER.callEvent(lacPlayerMoveEvent);
+            LACEventBus.call(LACEventType.PLAYER_MOVE, lacPlayerMoveEvent);
             Scheduler.runTaskAsynchronously(true, () -> {
-                PLUGIN_MANAGER.callEvent(new LACAsyncPlayerMoveEvent(lacPlayerMoveEvent));
+                LACEventBus.call(LACEventType.ASYNC_PLAYER_MOVE, new LACAsyncPlayerMoveEvent(lacPlayerMoveEvent));
             });
         });
     }
@@ -74,9 +68,9 @@ public class LACEventCaller extends LightInjector implements Listener {
         Scheduler.entityThread(player, () -> {
             if (!FoliaUtil.isStable(player))
                 return;
-            PLUGIN_MANAGER.callEvent(new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
+            LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
             Scheduler.runTaskAsynchronously(true, () -> {
-                PLUGIN_MANAGER.callEvent(new LACAsyncPlayerAttackEvent(player, lacPlayer, event.getEntity().getEntityId()));
+                LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(player, lacPlayer, event.getEntity().getEntityId()));
             });
         });
     }
@@ -91,9 +85,9 @@ public class LACEventCaller extends LightInjector implements Listener {
         Scheduler.entityThread(player, () -> {
             if (!FoliaUtil.isStable(player))
                 return;
-            PLUGIN_MANAGER.callEvent(lacPlayerPlaceBlockEvent);
+            LACEventBus.call(LACEventType.PLAYER_PLACE_BLOCK, lacPlayerPlaceBlockEvent);
             Scheduler.runTaskAsynchronously(true, () -> {
-                PLUGIN_MANAGER.callEvent(new LACAsyncPlayerPlaceBlockEvent(lacPlayerPlaceBlockEvent));
+                LACEventBus.call(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, new LACAsyncPlayerPlaceBlockEvent(lacPlayerPlaceBlockEvent));
             });
         });
     }
@@ -107,9 +101,9 @@ public class LACEventCaller extends LightInjector implements Listener {
         Scheduler.entityThread(player, () -> {
             if (!FoliaUtil.isStable(player))
                 return;
-            PLUGIN_MANAGER.callEvent(lacPlayerBreakBlockEvent);
+            LACEventBus.call(LACEventType.PLAYER_BREAK_BLOCK, lacPlayerBreakBlockEvent);
             Scheduler.runTaskAsynchronously(true, () -> {
-                PLUGIN_MANAGER.callEvent(new LACAsyncPlayerBreakBlockEvent(lacPlayerBreakBlockEvent));
+                LACEventBus.call(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, new LACAsyncPlayerBreakBlockEvent(lacPlayerBreakBlockEvent));
             });
         });
     }
@@ -123,14 +117,14 @@ public class LACEventCaller extends LightInjector implements Listener {
             return nmsPacket;
         LACAsyncPacketReceiveEvent event = new LACAsyncPacketReceiveEvent(sender, lacPlayer, nmsPacket);
         if (event.getPacketType() == PacketType.USE_ENTITY && VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
-            PLUGIN_MANAGER.callEvent(new LACAsyncPlayerAttackEvent(event.getPlayer(), event.getLacPlayer(), event.getEntityId()));
+            LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(event.getPlayer(), event.getLacPlayer(), event.getEntityId()));
         }
         if (event.getPacketType() == PacketType.FLYING) {
             Scheduler.runTaskAsynchronously(true, () -> {
-                PLUGIN_MANAGER.callEvent(event);
+                LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, event);
             });
         } else {
-            PLUGIN_MANAGER.callEvent(event);
+            LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, event);
         }
         return nmsPacket;
     }

@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 public class Scheduler {
 
     private static final GameScheduler SCHEDULER;
+    private static Timer TIMER = new Timer(true);
 
     static {
         SCHEDULER = !FoliaUtil.isFolia() ? new BukkitScheduler() : new FoliaScheduler();
@@ -79,19 +80,24 @@ public class Scheduler {
     }
 
     public static void schedule(TimerTask task, long delayInMs) {
-        new Timer().schedule(task, delayInMs);
+        TIMER.schedule(task, delayInMs);
     }
 
     public static void schedule(TimerTask task, Date date) {
-        new Timer().schedule(task, date);
+        TIMER.schedule(task, date);
     }
 
     public static void scheduleAtFixedRate(TimerTask task, long delayInMs, long periodInMs) {
-        new Timer().scheduleAtFixedRate(task, delayInMs, periodInMs);
+        TIMER.scheduleAtFixedRate(task, delayInMs, periodInMs);
     }
 
     public static void scheduleAtFixedRate(TimerTask task, Date date, long periodInMs) {
-        new Timer().scheduleAtFixedRate(task, date, periodInMs);
+        TIMER.scheduleAtFixedRate(task, date, periodInMs);
+    }
+
+    public static void cancelTimer() {
+        TIMER.cancel();
+        TIMER = new Timer(true);
     }
 
 }

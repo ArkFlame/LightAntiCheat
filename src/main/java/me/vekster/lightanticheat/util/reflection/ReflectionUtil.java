@@ -196,11 +196,10 @@ public class ReflectionUtil {
         for (int i = 0; i < args.length; i++)
             classes[i] = args[i].getClass();
         try {
-            aClass.getDeclaredMethod(name, classes).invoke(aClass, args);
+            return aClass.getDeclaredMethod(name, classes).invoke(aClass, args);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new ReflectionException(e);
         }
-        throw new ReflectionException();
     }
 
     @Nullable
@@ -211,11 +210,10 @@ public class ReflectionUtil {
         for (int i = 0; i < args.length; i++)
             classes[i] = args[i].getClass();
         try {
-            object.getClass().getDeclaredMethod(name, classes).invoke(object, args);
+            return object.getClass().getDeclaredMethod(name, classes).invoke(object, args);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new ReflectionException(e);
         }
-        throw new ReflectionException();
     }
 
     @Nullable
@@ -258,11 +256,10 @@ public class ReflectionUtil {
         for (int i = 0; i < args.length; i++)
             classes[i] = args[i].getClass();
         try {
-            aClass.getMethod(name, classes).invoke(aClass, args);
+            return aClass.getMethod(name, classes).invoke(aClass, args);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new ReflectionException(e);
         }
-        throw new ReflectionException();
     }
 
     @Nullable
@@ -273,11 +270,10 @@ public class ReflectionUtil {
         for (int i = 0; i < args.length; i++)
             classes[i] = args[i].getClass();
         try {
-            object.getClass().getMethod(name, classes).invoke(object, args);
+            return object.getClass().getMethod(name, classes).invoke(object, args);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new ReflectionException(e);
         }
-        throw new ReflectionException();
     }
 
 }

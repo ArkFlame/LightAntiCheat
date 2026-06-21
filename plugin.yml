@@ -1,0 +1,45 @@
+name: LightAntiCheat-Plus
+version: '2.0.0'
+main: me.vekster.lightanticheat.Main
+api-version: '1.13'
+folia-supported: true
+softdepend:
+  - Geyser-Spigot
+  - floodgate
+  - ViaVersion
+  - GSit
+  - mcMMO
+  - ValhallaMMO
+  - VeinMiner
+  - AureliumSkills
+  - ExecutableItems
+  - EnchantsSquared
+authors:
+  - ArkFlame Studios
+website: https://github.com/ArkFlame/LightAntiCheat
+description: LightAntiCheat-Plus fork maintained by ArkFlame Studios.
+commands:
+  lightanticheat:
+    aliases: [light, lac, anticheat, ac]
+permissions:
+  lightanticheat.*:
+    default: op
+    children:
+      lightanticheat.alerts: true
+      lightanticheat.client: true
+      lightanticheat.cps: true
+      lightanticheat.tps: true
+      lightanticheat.reload: true
+      lightanticheat.checks: true
+  lightanticheat.alerts:
+    default: op
+  lightanticheat.client:
+    default: op
+  lightanticheat.cps:
+    default: op
+  lightanticheat.tps:
+    default: op
+  lightanticheat.reload:
+    default: op
+  lightanticheat.checks:
+    default: op
