@@ -159,7 +159,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     public void setCancelled(boolean cancel) {
         cancelled = cancel;
         if (cancelled) {
-            Scheduler.runTask(true, () -> {
+            Scheduler.entityThread(getPlayer(), true, () -> {
                 if (cancelled) {
                     FoliaUtil.teleportPlayer(getPlayer(), getFrom());
                 }

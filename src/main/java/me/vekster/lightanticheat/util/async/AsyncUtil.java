@@ -28,7 +28,9 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static World getWorld(Entity entity) throws RuntimeException {
-        if (!isUnstableLegacy() || FoliaUtil.isFolia() || Bukkit.isPrimaryThread())
+        if (FoliaUtil.isFolia())
+            return FoliaUtil.isOwnedByCurrentRegion(entity) ? entity.getWorld() : null;
+        if (!isUnstableLegacy() || Bukkit.isPrimaryThread())
             return entity.getWorld();
 
         CompletableFuture<World> future = new CompletableFuture<>();
@@ -58,7 +60,9 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static Block getBlock(Location location) {
-        if (Bukkit.isPrimaryThread() || FoliaUtil.isFolia())
+        if (FoliaUtil.isFolia())
+            return FoliaUtil.isOwnedByCurrentRegion(location, 0) ? location.getBlock() : null;
+        if (Bukkit.isPrimaryThread())
             return location.getBlock();
 
         if (isUnstableLegacy()) {
@@ -83,7 +87,9 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static Block getBlockAt(World world, int x, int y, int z) {
-        if (Bukkit.isPrimaryThread() || FoliaUtil.isFolia())
+        if (FoliaUtil.isFolia())
+            return FoliaUtil.isOwnedByCurrentRegion(world, x >> 4, z >> 4, 0) ? world.getBlockAt(x, y, z) : null;
+        if (Bukkit.isPrimaryThread())
             return world.getBlockAt(x, y, z);
 
         if (isUnstableLegacy()) {
@@ -106,7 +112,9 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static Block getBlockAt(World world, Location location) {
-        if (Bukkit.isPrimaryThread() || FoliaUtil.isFolia())
+        if (FoliaUtil.isFolia())
+            return FoliaUtil.isOwnedByCurrentRegion(location, 0) ? world.getBlockAt(location) : null;
+        if (Bukkit.isPrimaryThread())
             return world.getBlockAt(location);
 
         if (isUnstableLegacy()) {
@@ -128,7 +136,21 @@ public class AsyncUtil {
 
     @SecureAsync
     public static List<Entity> getNearbyEntities(Entity entity, double x, int y, int z) {
-        if (Bukkit.isPrimaryThread() || FoliaUtil.isFolia()) {
+        if (FoliaUtil.isFolia()) {
+            if (!FoliaUtil.isOwnedByCurrentRegion(entity))
+                return new ArrayList<>();
+            if (VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
+                return entity.getNearbyEntities(x, y, z);
+            } else {
+                try {
+                    return entity.getNearbyEntities(x, y, z);
+                } catch (IllegalStateException exception) {
+                    return new ArrayList<>();
+                }
+            }
+        }
+
+        if (Bukkit.isPrimaryThread()) {
             if (VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
                 return entity.getNearbyEntities(x, y, z);
             } else {

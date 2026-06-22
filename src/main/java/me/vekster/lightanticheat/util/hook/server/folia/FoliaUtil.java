@@ -4,6 +4,7 @@ import me.vekster.lightanticheat.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -21,6 +22,10 @@ public final class FoliaUtil {
     private static Method getRegionSchedulerMethod;
     private static Method entityGetSchedulerMethod;
     private static Method entityTeleportAsyncMethod;
+    private static Method isOwnedByCurrentRegionLocationRadiusMethod;
+    private static Method isOwnedByCurrentRegionWorldChunkRadiusMethod;
+    private static Method isOwnedByCurrentRegionEntityMethod;
+    private static Method isOwnedByCurrentRegionBlockMethod;
 
     private FoliaUtil() {
     }
@@ -37,6 +42,14 @@ public final class FoliaUtil {
             getRegionSchedulerMethod = Bukkit.getServer().getClass().getMethod("getRegionScheduler");
             entityGetSchedulerMethod = Entity.class.getMethod("getScheduler");
             entityTeleportAsyncMethod = Entity.class.getMethod("teleportAsync", Location.class);
+            isOwnedByCurrentRegionLocationRadiusMethod = Bukkit.getServer().getClass()
+                    .getMethod("isOwnedByCurrentRegion", Location.class, int.class);
+            isOwnedByCurrentRegionWorldChunkRadiusMethod = Bukkit.getServer().getClass()
+                    .getMethod("isOwnedByCurrentRegion", World.class, int.class, int.class, int.class);
+            isOwnedByCurrentRegionEntityMethod = Bukkit.getServer().getClass()
+                    .getMethod("isOwnedByCurrentRegion", Entity.class);
+            isOwnedByCurrentRegionBlockMethod = Bukkit.getServer().getClass()
+                    .getMethod("isOwnedByCurrentRegion", Block.class);
         } catch (final ReflectiveOperationException exception) {
             folia = false;
             clearMethods();
@@ -132,6 +145,41 @@ public final class FoliaUtil {
         return CompletableFuture.completedFuture(false);
     }
 
+    public static boolean isOwnedByCurrentRegion(final Location location, final int squareRadiusChunks) {
+        if (!folia) return Bukkit.isPrimaryThread();
+        if (location == null) return false;
+        if (location.getWorld() == null) return false;
+        return invokeOwnership(isOwnedByCurrentRegionLocationRadiusMethod, location, Math.max(0, squareRadiusChunks));
+    }
+
+    public static boolean isOwnedByCurrentRegion(final World world, final int chunkX, final int chunkZ, final int squareRadiusChunks) {
+        if (!folia) return Bukkit.isPrimaryThread();
+        if (world == null) return false;
+        return invokeOwnership(isOwnedByCurrentRegionWorldChunkRadiusMethod, world, chunkX, chunkZ, Math.max(0, squareRadiusChunks));
+    }
+
+    public static boolean isOwnedByCurrentRegion(final Entity entity) {
+        if (!folia) return Bukkit.isPrimaryThread();
+        if (entity == null) return false;
+        return invokeOwnership(isOwnedByCurrentRegionEntityMethod, entity);
+    }
+
+    public static boolean isOwnedByCurrentRegion(final Block block) {
+        if (!folia) return Bukkit.isPrimaryThread();
+        if (block == null) return false;
+        return invokeOwnership(isOwnedByCurrentRegionBlockMethod, block);
+    }
+
+    private static boolean invokeOwnership(final Method method, final Object... args) {
+        try {
+            final Object result = method.invoke(Bukkit.getServer(), args);
+            return result instanceof Boolean && (Boolean) result;
+        } catch (final ReflectiveOperationException exception) {
+            Main.getInstance().getLogger().warning("Failed to invoke Folia ownership check method " + method.getName() + ".");
+            return false;
+        }
+    }
+
     private static Plugin plugin() {
         return Main.getInstance();
     }
@@ -182,5 +230,9 @@ public final class FoliaUtil {
         getRegionSchedulerMethod = null;
         entityGetSchedulerMethod = null;
         entityTeleportAsyncMethod = null;
+        isOwnedByCurrentRegionLocationRadiusMethod = null;
+        isOwnedByCurrentRegionWorldChunkRadiusMethod = null;
+        isOwnedByCurrentRegionEntityMethod = null;
+        isOwnedByCurrentRegionBlockMethod = null;
     }
 }

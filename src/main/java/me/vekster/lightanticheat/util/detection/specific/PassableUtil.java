@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.util.detection.specific;
 
+import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -28,6 +29,8 @@ public class PassableUtil extends GroundUtil {
     }
 
     public static boolean isActuallyPassable(Block block) {
+        if (FoliaUtil.isFolia() && !FoliaUtil.isOwnedByCurrentRegion(block))
+            return true;
         String downBlockName = block.getRelative(BlockFace.DOWN).getType().name().toLowerCase();
         if (downBlockName.endsWith("_wall") || downBlockName.endsWith("_fence") ||
                 downBlockName.endsWith("_fence_gate") || downBlockName.endsWith("shulker_box") ||

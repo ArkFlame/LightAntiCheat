@@ -49,12 +49,20 @@ public class BukkitScheduler implements GameScheduler {
 
     @Override
     public void entityThread(Player player, Runnable task) {
-        task.run();
+        if (Bukkit.isPrimaryThread()) {
+            task.run();
+            return;
+        }
+        Bukkit.getScheduler().runTask(Main.getInstance(), task);
     }
 
     @Override
     public void entityThread(Player player, boolean force, Runnable task) {
-        task.run();
+        if (Bukkit.isPrimaryThread()) {
+            task.run();
+            return;
+        }
+        Bukkit.getScheduler().runTask(Main.getInstance(), task);
     }
 
 }

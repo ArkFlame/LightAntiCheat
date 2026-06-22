@@ -46,14 +46,10 @@ public class LACEventCaller extends LightInjector implements Listener {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         LACPlayerMoveEvent lacPlayerMoveEvent = new LACPlayerMoveEvent(event, player, lacPlayer, event.getFrom(), event.getTo());
-        Scheduler.entityThread(player, () -> {
-            if (!FoliaUtil.isStable(player))
-                return;
-            LACEventBus.call(LACEventType.PLAYER_MOVE, lacPlayerMoveEvent);
-            Scheduler.runTaskAsynchronously(true, () -> {
-                LACEventBus.call(LACEventType.ASYNC_PLAYER_MOVE, new LACAsyncPlayerMoveEvent(lacPlayerMoveEvent));
-            });
-        });
+        if (!FoliaUtil.isStable(player))
+            return;
+        LACEventBus.call(LACEventType.PLAYER_MOVE, lacPlayerMoveEvent);
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_MOVE, new LACAsyncPlayerMoveEvent(lacPlayerMoveEvent));
     }
 
     public static void callEntityDamageEvent(EntityDamageByEntityEvent event) {
@@ -65,14 +61,10 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (CheckUtil.isExternalNPC(event.getEntity()))
             return;
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        Scheduler.entityThread(player, () -> {
-            if (!FoliaUtil.isStable(player))
-                return;
-            LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
-            Scheduler.runTaskAsynchronously(true, () -> {
-                LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(player, lacPlayer, event.getEntity().getEntityId()));
-            });
-        });
+        if (!FoliaUtil.isStable(player))
+            return;
+        LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(player, lacPlayer, event.getEntity().getEntityId()));
     }
 
     public static void callBlockPlaceEvents(BlockPlaceEvent event) {
@@ -82,14 +74,10 @@ public class LACEventCaller extends LightInjector implements Listener {
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         LACPlayerPlaceBlockEvent lacPlayerPlaceBlockEvent = new LACPlayerPlaceBlockEvent(event, player, lacPlayer,
                 event.getBlock(), event.getBlockAgainst(), event.getBlockReplacedState());
-        Scheduler.entityThread(player, () -> {
-            if (!FoliaUtil.isStable(player))
-                return;
-            LACEventBus.call(LACEventType.PLAYER_PLACE_BLOCK, lacPlayerPlaceBlockEvent);
-            Scheduler.runTaskAsynchronously(true, () -> {
-                LACEventBus.call(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, new LACAsyncPlayerPlaceBlockEvent(lacPlayerPlaceBlockEvent));
-            });
-        });
+        if (!FoliaUtil.isStable(player))
+            return;
+        LACEventBus.call(LACEventType.PLAYER_PLACE_BLOCK, lacPlayerPlaceBlockEvent);
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, new LACAsyncPlayerPlaceBlockEvent(lacPlayerPlaceBlockEvent));
     }
 
     public static void callBlockBreakEvents(BlockBreakEvent event) {
@@ -98,14 +86,10 @@ public class LACEventCaller extends LightInjector implements Listener {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         LACPlayerBreakBlockEvent lacPlayerBreakBlockEvent = new LACPlayerBreakBlockEvent(event, player, lacPlayer, event.getBlock());
-        Scheduler.entityThread(player, () -> {
-            if (!FoliaUtil.isStable(player))
-                return;
-            LACEventBus.call(LACEventType.PLAYER_BREAK_BLOCK, lacPlayerBreakBlockEvent);
-            Scheduler.runTaskAsynchronously(true, () -> {
-                LACEventBus.call(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, new LACAsyncPlayerBreakBlockEvent(lacPlayerBreakBlockEvent));
-            });
-        });
+        if (!FoliaUtil.isStable(player))
+            return;
+        LACEventBus.call(LACEventType.PLAYER_BREAK_BLOCK, lacPlayerBreakBlockEvent);
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, new LACAsyncPlayerBreakBlockEvent(lacPlayerBreakBlockEvent));
     }
 
     @Override
@@ -116,16 +100,15 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (lacPlayer == null || lacPlayer.leaveTime != 0L || !sender.isOnline())
             return nmsPacket;
         LACAsyncPacketReceiveEvent event = new LACAsyncPacketReceiveEvent(sender, lacPlayer, nmsPacket);
-        if (event.getPacketType() == PacketType.USE_ENTITY && VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
-            LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(event.getPlayer(), event.getLacPlayer(), event.getEntityId()));
-        }
-        if (event.getPacketType() == PacketType.FLYING) {
-            Scheduler.runTaskAsynchronously(true, () -> {
-                LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, event);
-            });
-        } else {
+        Scheduler.entityThread(sender, true, () -> {
+            if (!FoliaUtil.isStable(sender))
+                return;
+            if (event.getPacketType() == PacketType.USE_ENTITY && VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
+                LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK,
+                        new LACAsyncPlayerAttackEvent(event.getPlayer(), event.getLacPlayer(), event.getEntityId()));
+            }
             LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, event);
-        }
+        });
         return nmsPacket;
     }
 
