@@ -11,6 +11,7 @@ import me.vekster.lightanticheat.check.checks.combat.reach.ReachA;
 import me.vekster.lightanticheat.check.checks.combat.reach.ReachB;
 import me.vekster.lightanticheat.check.checks.combat.velocity.VelocityA;
 import me.vekster.lightanticheat.check.checks.interaction.airplace.AirPlaceA;
+import me.vekster.lightanticheat.check.checks.interaction.autotool.AutoToolA;
 import me.vekster.lightanticheat.check.checks.interaction.blockbreak.BlockBreakA;
 import me.vekster.lightanticheat.check.checks.interaction.blockbreak.BlockBreakB;
 import me.vekster.lightanticheat.check.checks.interaction.blockplace.BlockPlaceA;
@@ -164,6 +165,7 @@ public class Main extends JavaPlugin {
         registerCheckListener(new BlockPlaceB());
         registerCheckListener(new GhostBreakA());
         registerCheckListener(new FastBreakA());
+        registerCheckListener(new AutoToolA());
         registerCheckListener(new BlockBreakA());
         registerCheckListener(new BlockBreakB());
         registerCheckListener(new ScaffoldA());

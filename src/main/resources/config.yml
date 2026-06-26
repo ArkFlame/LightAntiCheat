@@ -837,6 +837,22 @@ checks:
           max-ping: 10000
           java: true
           bedrock: true
+    autotool:
+      autotool_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 5
+        detection:
+          min-tps: 5.0
+          max-ping: 400
+          java: true
+          bedrock: true
     blockbreak:
       blockbreak_a:
         enabled: true

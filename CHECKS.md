@@ -46,6 +46,7 @@
 * BlockPlaceB (Block place reach)
 * GhostBreakA (Interaction through blocks)
 * FastBreakA (Mining speed for stone, deepslate)
+* AutoToolA (Automated tool swap)
 * BlockBreakA (Head rotation)
 * BlockBreakB (Block break reach)
 * ScaffoldA (Impossible placement)
