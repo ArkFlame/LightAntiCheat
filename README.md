@@ -49,18 +49,20 @@ Check out the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 Specific bypass permissions can be enabled in the config
 * lightanticheat.* - all the above
 
-## Maven/Gradle
-You can add LightAntiCheat's API as a Maven dependency:
-````xml
+## Building
+This fork is built with Maven, targets Java 17, and can be built with JDK 21:
+```bash
+mvn clean package
+```
+The shaded plugin jar is written to `target/LightAntiCheat-Plus-2.0.0.jar`.
+
+## Maven Dependency
+You can add LightAntiCheat-Plus as a Maven dependency:
+```xml
 <dependency>
-  <groupId>me.vekster</groupId>
-  <artifactId>lightanticheat</artifactId>
-  <version>1.2.7</version>
+    <groupId>com.arkflame</groupId>
+    <artifactId>LightAntiCheat-Plus</artifactId>
+    <version>2.0.0</version>
+    <scope>provided</scope>
 </dependency>
-````
-Or use the maven dependency with Gradle:
-```gradle
-dependencies {
-    compileOnly 'me.vekster:lightanticheat:1.2.7'
-}
 ```

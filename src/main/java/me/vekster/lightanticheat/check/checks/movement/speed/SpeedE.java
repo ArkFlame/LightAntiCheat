@@ -281,7 +281,7 @@ public class SpeedE extends MovementCheck implements Listener {
 
         if (getEffectAmplifier(cache, VerUtil.potions.get("LEVITATION")) > 1 ||
                 getEffectAmplifier(cache, VerUtil.potions.get("SLOW_FALLING")) > 1 ||
-                getEffectAmplifier(cache, PotionEffectType.JUMP) > 2)
+                getEffectAmplifier(cache, VerUtil.potions.get("JUMP")) > 2)
             return;
 
         for (int i = 0; i < HistoryElement.values().length; i++) {

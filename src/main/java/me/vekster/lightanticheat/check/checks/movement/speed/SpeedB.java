@@ -158,7 +158,7 @@ public class SpeedB extends MovementCheck implements Listener {
                 maxSpeed *= 1.35;
         }
         if (!isBlockHeight((float) getBlockY(event.getTo().getY()))) {
-            if (getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP) > 0 ||
+            if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP")) > 0 ||
                     getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("LEVITATION")) > 0)
                 return;
             hSpeed -= distanceAbsVertical(event.getFrom(), event.getTo()) * 2.5;

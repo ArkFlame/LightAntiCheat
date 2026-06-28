@@ -79,8 +79,7 @@ public class BoatA extends MovementCheck implements Listener {
             return;
         }
 
-        if (boat.getType() != EntityType.BOAT &&
-                !boat.getType().name().equalsIgnoreCase("CHEST_BOAT")) {
+        if (!VerUtil.isBoat(boat.getType())) {
             buffer.put("boatFlightEvents", 0);
             return;
         }
@@ -209,8 +208,7 @@ public class BoatA extends MovementCheck implements Listener {
             return;
         }
 
-        if (boat.getType() != EntityType.BOAT &&
-                !boat.getType().name().equalsIgnoreCase("CHEST_BOAT")) {
+        if (!VerUtil.isBoat(boat.getType())) {
             buffer.put("boatSpeedEvents", 0);
             buffer.put("previousLocation", event.getFrom());
             return;

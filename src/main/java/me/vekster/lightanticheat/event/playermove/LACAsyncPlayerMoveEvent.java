@@ -35,8 +35,8 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
 
         this.player = event.getPlayer();
         this.lacPlayer = event.getLacPlayer();
-        this.from = event.getFrom();
-        this.to = event.getTo();
+        this.from = event.getFrom().clone();
+        this.to = event.getTo().clone();
         this.isPlayerFlying = event.isPlayerFlying();
         this.isPlayerInsideVehicle = event.isPlayerInsideVehicle();
         this.isPlayerGliding = event.isPlayerGliding();
@@ -63,11 +63,11 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     }
 
     public Location getFrom() {
-        return from;
+        return from.clone();
     }
 
     public Location getTo() {
-        return to;
+        return to.clone();
     }
 
     public boolean isPlayerClimbing() {

@@ -49,7 +49,7 @@ public class PassableUtil extends GroundUtil {
                 material == Material.PAINTING || material == Material.TORCH ||
                 material == VerUtil.material.get("REDSTONE_TORCH") || material == VerUtil.material.get("SOUL_TORCH") ||
                 material == VerUtil.material.get("MANGROVE_PROPAGULE") || material == Material.SUGAR_CANE ||
-                material == Material.GRASS || material == VerUtil.material.get("TALL_GRASS") ||
+                material == VerUtil.material.get("GRASS") || material == VerUtil.material.get("TALL_GRASS") ||
                 material == VerUtil.material.get("FERN") || material == VerUtil.material.get("LARGE_FERN"))
             return true;
 

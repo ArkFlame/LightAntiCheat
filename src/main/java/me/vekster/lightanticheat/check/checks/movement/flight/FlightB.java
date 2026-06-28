@@ -192,7 +192,7 @@ public class FlightB extends MovementCheck implements Listener {
             }
         }
 
-        if (getEffectAmplifier(cache, PotionEffectType.JUMP) == 0 &&
+        if (getEffectAmplifier(cache, VerUtil.potions.get("JUMP")) == 0 &&
                 currentTime - buffer.getLong("justEffectTime") < 100) {
             updateStartLocation(event.getTo(), false, 0.0, buffer);
             buffer.put("flightTicks", 0);
@@ -210,7 +210,7 @@ public class FlightB extends MovementCheck implements Listener {
         }
 
         double height = distanceVertical(buffer.getLocation("startLocation"), event.getTo());
-        int jumpEffectAmplifier = getEffectAmplifier(cache, PotionEffectType.JUMP);
+        int jumpEffectAmplifier = getEffectAmplifier(cache, VerUtil.potions.get("JUMP"));
         if (jumpEffectAmplifier > 2)
             height -= (jumpEffectAmplifier - 2) * 0.2;
         height = height * 0.9 - 0.1 - buffer.getInt("interactiveOffset");
@@ -270,14 +270,14 @@ public class FlightB extends MovementCheck implements Listener {
     }
 
     private void updateStartLocation(Location location, boolean force, double lift, Buffer buffer) {
-        location.add(0, lift, 0);
+        Location startCandidate = location.clone().add(0, lift, 0);
         Location startLocation = buffer.getLocation("startLocation");
         if (force || startLocation == null) {
-            buffer.put("startLocation", location);
+            buffer.put("startLocation", startCandidate);
             return;
         }
-        if (location.getY() > startLocation.getY())
-            buffer.put("startLocation", location);
+        if (startCandidate.getY() > startLocation.getY())
+            buffer.put("startLocation", startCandidate);
     }
 
     private float getAngle(Player player, Block block) {
@@ -303,10 +303,10 @@ public class FlightB extends MovementCheck implements Listener {
 
 
         if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("LEVITATION")) > 0 ||
-                getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP) > 32)
+                getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP")) > 32)
             buffer.put("effectTime", System.currentTimeMillis());
 
-        if (getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP) != 0)
+        if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP")) != 0)
             buffer.put("justEffectTime", System.currentTimeMillis());
     }
 

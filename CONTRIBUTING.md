@@ -28,7 +28,7 @@ To get started PRing changes you will need to have the following installed/condi
 - **Don't be afraid to ask questions.** If you have any questions about the project or how to contribute, feel free to ask in the [Discord server](https://discord.gg/EQExhK8Ghm).
 - **Don't be afraid to make mistakes.** If you make a mistake, we will help you fix it. We are all learning here.
 - **Don't be afraid to ask for help.** If you need help with something, don't be afraid to ask for help. We are all here to help each other.
-- You can set your output folder for the jars in the **gradle.properties** file.
+- Maven writes built jars to the **target** directory.
 - If you don't know what to do you can take an issue to solve :D
 
 **Real men don't test in production. Test your changes before you PR them. If you don't test them we will test them and if they don't work we will close your PR.**

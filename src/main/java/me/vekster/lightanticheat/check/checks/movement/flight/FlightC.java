@@ -241,7 +241,7 @@ public class FlightC extends MovementCheck implements Listener {
 
         if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("LEVITATION")) > 0 ||
                 getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("SLOW_FALLING")) > 1 ||
-                getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP) > 6) {
+                getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP")) > 6) {
             Buffer buffer = getBuffer(player, true);
             long currentTime = System.currentTimeMillis();
             buffer.put("effectTime", currentTime);

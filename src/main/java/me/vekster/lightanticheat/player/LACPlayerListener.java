@@ -302,13 +302,13 @@ public class LACPlayerListener implements Listener {
             Arrow arrow = (Arrow) event.getDamager();
             if (arrow.getShooter() instanceof Player) {
                 damager = (Player) arrow.getShooter();
-                enchantment = Enchantment.ARROW_KNOCKBACK;
+                enchantment = VerUtil.enchantment.get("ARROW_KNOCKBACK");
             }
         } else if (event.getDamager().getType() == VerUtil.entityTypes.get("SPECTRAL_ARROW")) {
             ProjectileSource shooter = VerUtil.getSpectralArrowShooter(event.getDamager());
             if (shooter instanceof Player) {
                 damager = (Player) shooter;
-                enchantment = Enchantment.ARROW_KNOCKBACK;
+                enchantment = VerUtil.enchantment.get("ARROW_KNOCKBACK");
             }
         }
         if (damager == null)
@@ -709,7 +709,7 @@ public class LACPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastBlockExplosion(LACAsyncPlayerMoveEvent event) {
         for (CachedEntity cachedEntity : event.getLacPlayer().cache.entitiesNearby)
-            if (cachedEntity.entityType == EntityType.PRIMED_TNT) {
+            if (VerUtil.isPrimedTnt(cachedEntity.entityType)) {
                 LACPlayer lacPlayer = event.getLacPlayer();
                 lacPlayer.cache.lastBlockExplosion = System.currentTimeMillis();
                 lacPlayer.cache.vectorOnBlockExplosion = null;
