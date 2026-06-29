@@ -7,14 +7,17 @@ final class LACEventSubscription {
 
     private final Object owner;
     private final String methodName;
+    private final LACMovementRequirement movementRequirement;
     private final Consumer<Object> consumer;
 
-    LACEventSubscription(Object owner, String methodName, Consumer<Object> consumer) {
+    LACEventSubscription(Object owner, String methodName, LACMovementRequirement movementRequirement, Consumer<Object> consumer) {
         Objects.requireNonNull(owner, "owner must not be null");
         Objects.requireNonNull(methodName, "methodName must not be null");
+        Objects.requireNonNull(movementRequirement, "movementRequirement must not be null");
         Objects.requireNonNull(consumer, "consumer must not be null");
         this.owner = owner;
         this.methodName = methodName;
+        this.movementRequirement = movementRequirement;
         this.consumer = consumer;
     }
 
@@ -28,6 +31,10 @@ final class LACEventSubscription {
 
     Consumer<Object> getConsumer() {
         return consumer;
+    }
+
+    boolean shouldCall(Object event) {
+        return movementRequirement.accepts(event);
     }
 
     void accept(Object event) {

@@ -17,19 +17,27 @@ public final class LACEventBus {
     private LACEventBus() {
     }
 
+    public static void register(LACEventType type, LACEventPriority priority,
+                                Object owner, String methodName, Consumer<Object> consumer) {
+        register(type, priority, owner, methodName, LACMovementRequirement.ANY, consumer);
+    }
+
     public static synchronized void register(LACEventType type, LACEventPriority priority,
-                                              Object owner, String methodName, Consumer<Object> consumer) {
+                                              Object owner, String methodName,
+                                              LACMovementRequirement movementRequirement,
+                                              Consumer<Object> consumer) {
         Objects.requireNonNull(type, "type must not be null");
         Objects.requireNonNull(priority, "priority must not be null");
         Objects.requireNonNull(owner, "owner must not be null");
         Objects.requireNonNull(methodName, "methodName must not be null");
+        Objects.requireNonNull(movementRequirement, "movementRequirement must not be null");
         Objects.requireNonNull(consumer, "consumer must not be null");
 
         BUS.computeIfAbsent(type, k -> new EnumMap<>(LACEventPriority.class));
         EnumMap<LACEventPriority, CopyOnWriteArrayList<LACEventSubscription>> priorityMap = BUS.get(type);
         priorityMap.computeIfAbsent(priority, k -> new CopyOnWriteArrayList<LACEventSubscription>());
         CopyOnWriteArrayList<LACEventSubscription> subscriptions = priorityMap.get(priority);
-        subscriptions.add(new LACEventSubscription(owner, methodName, consumer));
+        subscriptions.add(new LACEventSubscription(owner, methodName, movementRequirement, consumer));
     }
 
     public static synchronized void unregister(Object owner) {
@@ -60,6 +68,9 @@ public final class LACEventBus {
             if (subscriptions == null || subscriptions.isEmpty()) continue;
 
             for (LACEventSubscription subscription : subscriptions) {
+                if (!subscription.shouldCall(event)) {
+                    continue;
+                }
                 try {
                     subscription.accept(event);
                 } catch (Exception e) {

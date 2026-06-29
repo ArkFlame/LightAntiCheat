@@ -1,7 +1,7 @@
 package com.kireiko.utils.registry;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class ServiceKey<T> {
@@ -15,7 +15,7 @@ public final class ServiceKey<T> {
         this.hashCode = Objects.hash(type, name);
     }
 
-    @Nonnull
+    @NotNull
     public Class<T> getType() {
         return type;
     }
@@ -44,13 +44,13 @@ public final class ServiceKey<T> {
         return name == null ? type.getName() : type.getName() + "(" + name + ")";
     }
 
-    @Nonnull
-    public static <T> ServiceKey<T> key(@Nonnull final Class<T> type) {
+    @NotNull
+    public static <T> ServiceKey<T> key(@NotNull final Class<T> type) {
         return new ServiceKey(type, null);
     }
 
-    @Nonnull
-    public static <T> ServiceKey<T> key(@Nonnull final Class<T> type, @Nonnull final String name) {
+    @NotNull
+    public static <T> ServiceKey<T> key(@NotNull final Class<T> type, @NotNull final String name) {
         return new ServiceKey(type, name);
     }
 }

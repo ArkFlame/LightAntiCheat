@@ -1,50 +1,50 @@
 package com.kireiko.utils.registry;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServiceRegistryImpl implements ServiceRegistry {
-    private final Map<ServiceKey<?>, Provider<?>> registry = new ConcurrentHashMap();
+    private final Map<ServiceKey<?>, Provider<?>> registry = new ConcurrentHashMap<>();
 
     public ServiceRegistryImpl() {
     }
 
-    @Nonnull
+    @NotNull
     public Set<ServiceKey<?>> keySet() {
         return registry.keySet();
     }
 
-    @Nonnull
+    @NotNull
     public Set<Map.Entry<ServiceKey<?>, Provider<?>>> entrySet() {
         return registry.entrySet();
     }
 
     @Nullable
-    public <T> T getOrNull(@Nonnull final ServiceKey<T> key) {
+    public <T> T getOrNull(@NotNull final ServiceKey<T> key) {
         final Provider<T> provider = (Provider<T>) registry.get(key);
         return provider == null ? null : provider.get();
     }
 
     @Nullable
-    public <T> T put(@Nonnull final ServiceKey<T> key, final T service) {
+    public <T> T put(@NotNull final ServiceKey<T> key, final T service) {
         return put(key, singleton(service));
     }
 
     @Nullable
-    public <T> T put(@Nonnull final ServiceKey<T> key, final Provider<T> service) {
+    public <T> T put(@NotNull final ServiceKey<T> key, final Provider<T> service) {
         return (T) registry.put(key, service);
     }
 
     @Nullable
-    public <T> T putIfAbsent(@Nonnull final ServiceKey<T> type, final T service) {
+    public <T> T putIfAbsent(@NotNull final ServiceKey<T> type, final T service) {
         return putIfAbsent(type, singleton(service));
     }
 
     @Nullable
-    public <T> T putIfAbsent(@Nonnull final ServiceKey<T> key, final Provider<T> service) {
+    public <T> T putIfAbsent(@NotNull final ServiceKey<T> key, final Provider<T> service) {
         return (T) registry.putIfAbsent(key, service);
     }
 

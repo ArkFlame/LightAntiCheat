@@ -156,6 +156,7 @@ public class ConfigManager extends PlaceholderConvertor {
 
         public static class GeyserHook {
             public static boolean enabled;
+            public static boolean bedrockOnly;
 
             public static class Floodgate {
                 public static boolean enabled;
@@ -200,7 +201,6 @@ public class ConfigManager extends PlaceholderConvertor {
     public static void loadConfig() {
         Main instance = Main.getInstance();
         instance.saveDefaultConfig();
-        FloodgateHook.loadFloodgateHook();
 
         try {
             ConfigUpdater.update(instance, "config.yml",
@@ -212,6 +212,7 @@ public class ConfigManager extends PlaceholderConvertor {
 
         FileConfiguration config = instance.getConfig();
         loadConfig(Config.class, Config.class, config);
+        FloodgateHook.loadFloodgateHook();
     }
 
     private static void loadConfig(Class<?> aClass, final Class<?> configClass, final FileConfiguration config) {

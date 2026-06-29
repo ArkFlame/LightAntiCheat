@@ -86,12 +86,14 @@ public final class LACEventRegistrar {
             LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, typed, "onAsyncHit",
                     event -> typed.onAsyncHit((LACAsyncPlayerAttackEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof KillAuraA) {
             KillAuraA typed = (KillAuraA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, typed, "onAsyncHit",
                     event -> typed.onAsyncHit((LACAsyncPlayerAttackEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.ROTATION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof KillAuraB) {
             KillAuraB typed = (KillAuraB) listener;
@@ -176,146 +178,191 @@ public final class LACEventRegistrar {
         } else if (listener instanceof BoatA) {
             BoatA typed = (BoatA) listener;
             LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.NORMAL, typed, "boatFlight",
+                    LACMovementRequirement.POSITION,
                     event -> typed.boatFlight((LACPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.NORMAL, typed, "boatSpeed",
+                    LACMovementRequirement.POSITION,
                     event -> typed.boatSpeed((LACPlayerMoveEvent) event));
         } else if (listener instanceof ElytraA) {
             ElytraA typed = (ElytraA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "theSameSpeed",
+                    LACMovementRequirement.POSITION,
                     event -> typed.theSameSpeed((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "tooLowSpeed",
+                    LACMovementRequirement.POSITION,
                     event -> typed.tooLowSpeed((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof ElytraB) {
             ElytraB typed = (ElytraB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof ElytraC) {
             ElytraC typed = (ElytraC) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof FastClimbA) {
             FastClimbA typed = (FastClimbA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof FlightA) {
             FlightA typed = (FlightA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, typed, "scaffoldAsyncBlockPlace",
                     event -> typed.scaffoldAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
         } else if (listener instanceof FlightB) {
             FlightB typed = (FlightB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, typed, "scaffoldAsyncBlockPlace",
                     event -> typed.scaffoldAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
         } else if (listener instanceof FlightC) {
             FlightC typed = (FlightC) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, typed, "scaffoldAsyncBlockPlace",
                     event -> typed.scaffoldAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
         } else if (listener instanceof JumpA) {
             JumpA typed = (JumpA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof JumpB) {
             JumpB typed = (JumpB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof LiquidWalkA) {
             LiquidWalkA typed = (LiquidWalkA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof LiquidWalkB) {
             LiquidWalkB typed = (LiquidWalkB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof NoFallA) {
             NoFallA typed = (NoFallA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, LACEventPriority.NORMAL, typed, "scaffoldBlockBreak",
                     event -> typed.scaffoldBlockBreak((LACAsyncPlayerBreakBlockEvent) event));
         } else if (listener instanceof NoFallB) {
             NoFallB typed = (NoFallB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof NoSlowA) {
             NoSlowA typed = (NoSlowA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedA) {
             SpeedA typed = (SpeedA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "totalHorizontal",
+                    LACMovementRequirement.POSITION,
                     event -> typed.totalHorizontal((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "airHorizontal",
+                    LACMovementRequirement.POSITION,
                     event -> typed.airHorizontal((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeAirMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeAirMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedB) {
             SpeedB typed = (SpeedB) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedC) {
             SpeedC typed = (SpeedC) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedD) {
             SpeedD typed = (SpeedD) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedE) {
             SpeedE typed = (SpeedE) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.HIGH, typed, "afterMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.afterMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onTeleportHorizontal",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onTeleportHorizontal((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onTeleportVertical",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onTeleportVertical((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onHorizontal",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onHorizontal((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onVertical",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onVertical((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SpeedF) {
             SpeedF typed = (SpeedF) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof StepA) {
             StepA typed = (StepA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof TridentA) {
             TridentA typed = (TridentA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, typed, "beforeMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.beforeMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof VehicleA) {
             VehicleA typed = (VehicleA) listener;
@@ -352,6 +399,7 @@ public final class LACEventRegistrar {
             LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, typed, "onAsyncPacketReceive",
                     event -> typed.onAsyncPacketReceive((LACAsyncPacketReceiveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof TimerB) {
             TimerB typed = (TimerB) listener;
@@ -370,14 +418,17 @@ public final class LACEventRegistrar {
         } else if (listener instanceof AutoBotA) {
             AutoBotA typed = (AutoBotA) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onHeadRotation",
+                    LACMovementRequirement.ROTATION,
                     event -> typed.onHeadRotation((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onMovement",
+                    LACMovementRequirement.POSITION_AND_ROTATION,
                     event -> typed.onMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof SkinBlinkerA) {
             SkinBlinkerA typed = (SkinBlinkerA) listener;
             LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, typed, "onAsyncPacketReceive",
                     event -> typed.onAsyncPacketReceive((LACAsyncPacketReceiveEvent) event));
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onMovement",
+                    LACMovementRequirement.POSITION_AND_ROTATION,
                     event -> typed.onMovement((LACAsyncPlayerMoveEvent) event));
         } else if (listener instanceof InvalidPingListener) {
             InvalidPingListener typed = (InvalidPingListener) listener;
@@ -386,8 +437,10 @@ public final class LACEventRegistrar {
         } else if (listener instanceof UnloadedChunkListener) {
             UnloadedChunkListener typed = (UnloadedChunkListener) listener;
             LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onAsyncMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onAsyncMovement((LACAsyncPlayerMoveEvent) event));
             LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.NORMAL, typed, "onMovement",
+                    LACMovementRequirement.POSITION,
                     event -> typed.onMovement((LACPlayerMoveEvent) event));
         } else if (listener instanceof LACPlayerListener) {
             LACPlayerListener typed = (LACPlayerListener) listener;

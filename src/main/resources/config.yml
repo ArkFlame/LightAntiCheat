@@ -137,6 +137,9 @@ lag-protection:
 ## unless the Geyser player linking is enabled and uses a local database
 geyser-hook:
   enabled: true
+  # If true, all checks globally skip Java players and only check Bedrock/Geyser players.
+  # This keeps per-check detection.java/detection.bedrock settings intact but avoids editing every check.
+  bedrock-only: false
   floodgate:
     # Whether a player marked with Floodgate API 2.0+ counted as Bedrock players
     enabled: true

@@ -69,6 +69,8 @@ public class CheckUtil extends PassableUtil {
             return false;
 
         boolean bedrock = FloodgateHook.isBedrockPlayer(player, async);
+        if (ConfigManager.Config.GeyserHook.bedrockOnly && !bedrock)
+            return false;
         if (!bedrock && !checkSetting.detectJava || bedrock && !checkSetting.detectBedrock)
             return false;
         if (FloodgateHook.isCancelledCombat(checkSetting.name, player, async))

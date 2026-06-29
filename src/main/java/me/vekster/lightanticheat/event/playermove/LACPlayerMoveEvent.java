@@ -14,6 +14,7 @@ public class LACPlayerMoveEvent extends Event {
     private final LACPlayer lacPlayer;
     private final Location to;
     private final Location from;
+    private final LACMovementChange movementChange;
     private final Boolean isPlayerFlying;
     private final Boolean isPlayerInsideVehicle;
     private final Boolean isPlayerGliding;
@@ -26,6 +27,7 @@ public class LACPlayerMoveEvent extends Event {
         this.lacPlayer = lacPlayer;
         this.from = from.clone();
         this.to = to.clone();
+        this.movementChange = LACMovementChange.of(from, to);
         this.isPlayerFlying = player.isFlying();
         this.isPlayerInsideVehicle = player.isInsideVehicle();
         this.isPlayerGliding = lacPlayer.isGliding();
@@ -50,6 +52,26 @@ public class LACPlayerMoveEvent extends Event {
 
     public Location getTo() {
         return to.clone();
+    }
+
+    public LACMovementChange getMovementChange() {
+        return movementChange;
+    }
+
+    public boolean hasPositionChanged() {
+        return movementChange.isPositionChanged();
+    }
+
+    public boolean hasHorizontalChanged() {
+        return movementChange.isHorizontalChanged();
+    }
+
+    public boolean hasVerticalChanged() {
+        return movementChange.isVerticalChanged();
+    }
+
+    public boolean hasRotationChanged() {
+        return movementChange.isRotationChanged();
     }
 
     public boolean isPlayerFlying() {

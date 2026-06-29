@@ -21,6 +21,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     private final LACPlayer lacPlayer;
     private final Location to;
     private final Location from;
+    private final LACMovementChange movementChange;
     private final Boolean isPlayerClimbing;
     private final Boolean isPlayerInWater;
     private final Boolean isPlayerFlying;
@@ -37,12 +38,13 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         this.lacPlayer = event.getLacPlayer();
         this.from = event.getFrom().clone();
         this.to = event.getTo().clone();
+        this.movementChange = event.getMovementChange();
         this.isPlayerFlying = event.isPlayerFlying();
         this.isPlayerInsideVehicle = event.isPlayerInsideVehicle();
         this.isPlayerGliding = event.isPlayerGliding();
         this.isPlayerRiptiding = event.isPlayerRiptiding();
         this.fromBlockCache = lacPlayer.cache.fromBlockCache;
-        if (FoliaUtil.isStable(event.getPlayer())) {
+        if (movementChange.isPositionChanged() && FoliaUtil.isStable(event.getPlayer())) {
             this.toBlockCache = new BlockCache(player, to);
             isPlayerClimbing = lacPlayer.isClimbing();
             isPlayerInWater = lacPlayer.isInWater();
@@ -68,6 +70,26 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
 
     public Location getTo() {
         return to.clone();
+    }
+
+    public LACMovementChange getMovementChange() {
+        return movementChange;
+    }
+
+    public boolean hasPositionChanged() {
+        return movementChange.isPositionChanged();
+    }
+
+    public boolean hasHorizontalChanged() {
+        return movementChange.isHorizontalChanged();
+    }
+
+    public boolean hasVerticalChanged() {
+        return movementChange.isVerticalChanged();
+    }
+
+    public boolean hasRotationChanged() {
+        return movementChange.isRotationChanged();
     }
 
     public boolean isPlayerClimbing() {
