@@ -48,7 +48,7 @@ alerts:
     enabled: true
     message: "%prefix% %name% was flagged for %check% (%vio%/%punishment-vio%)"
     # Broadcasts violations of a player no more than 1 time in X ms
-    cooldown: 0
+    cooldown: 1000
     # Leave this field empty not to hover any text
     on-hover: "&7Check: &#FF450E%check% (%check-description%)%new-line%&7World: &#FF450E%world%%new-line%&7Cords: &#FF450E%x% %y% %z%%new-line%&7Client: &#FF450E%client-brand%"
     # Local placeholders: %teleport-location%
@@ -57,7 +57,7 @@ alerts:
     enabled: true
     message: "%prefix% %name% was punished for %check%"
     # Broadcasts punishments of a player no more than 1 time in X ms
-    cooldown: 0
+    cooldown: 1000
     # Leave this field empty not to hover any text
     on-hover: "&7Check: &#FF450E%check% (%check-description%)%new-line%&7World: &#FF450E%world%%new-line%&7Cords: &#FF450E%x% %y% %z%%new-line%&7Client: &#FF450E%client-brand%"
     # Local placeholders: %teleport-location%
@@ -105,7 +105,7 @@ discord-webhook:
 permission:
   # 'lightanticheat.bypess.flight_a' is a specific bypass permission
   # Whether the specific bypass permissions should be enabled
-  per-check-bypass-permission: false
+  per-check-bypass-permission: true
   # If set to 'true', all the bypass permissions are disabled
   disable-all-bypass-permissions: false
 
@@ -113,21 +113,21 @@ permission:
 violation:
   reset:
     # The interval in which violations are reset
-    reset-interval: 180
+    reset-interval: 240
   cache:
     enabled: true
     # Saves the player's violations for X seconds after the player leaves
     # If set to '0', the player's violation are reset when player quits
-    cache-duration: 180
+    cache-duration: 120
 
 ## Lag conditions under which the detection should be disabled
 lag-protection:
   # Stops the checks if the server doesn't respond for X ms
-  tick-threshold: 1000
+  tick-threshold: 750
   # Disables the checks on join for X ms
-  ignore-time-on-join: 0
+  ignore-time-on-join: 3000
   # Disables the checks on teleportation to unloaded chunks for X ms
-  ignore-time-on-teleport: 0
+  ignore-time-on-teleport: 3000
   # Prevents gliding and riptiding players from entering into unloaded chunks
   prevent-entering-into-unloaded-chucks: true
   # Slightly improves accuracy in laggy conditions
@@ -188,7 +188,7 @@ checks:
           # Should the punishment commands be executed
           punishable: true
           # After X violations, the punishment commands are run
-          punishment-vio: 40
+          punishment-vio: 60
           # The commands
           commands:
             - "kick %name% %check%"
@@ -200,374 +200,374 @@ checks:
           # 2. Using a punishment command is simply more efficient
           setback: false
           # After X violations, the player's actions should be cancelled
-          setback-vio: 21
+          setback-vio: 36
         # Exempts from flight_a check if the conditions are not satisfied
         detection:
           # If the server's TPS is lower than X, this check is bypassed
-          min-tps: 5.0
+          min-tps: 18.0
           # If the player's ping is higher than X, this check is bypassed
           # The ping can't be higher than 10,000
-          max-ping: 10000
+          max-ping: 300
           # Should the Java players be checked
           java: true
           # Should the players who joined via Geyser be checked
-          bedrock: true
+          bedrock: false
       flight_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 60
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 36
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       flight_c:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 60
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 36
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     speed:
       speed_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 30
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 16
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       speed_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 35
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 18
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       speed_c:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 55
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 33
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       speed_d:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 30
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 16
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       speed_e:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 30
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 16
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       speed_f:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 50
+          punishment-vio: 60
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 26
+          setback-vio: 36
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     nofall:
       nofall_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 20
+          punishment-vio: 30
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 17
+          setback-vio: 18
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       nofall_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 25
+          punishment-vio: 35
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 22
+          setback-vio: 21
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     jump:
       jump_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 20
+          punishment-vio: 30
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 7
+          setback-vio: 18
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       jump_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 20
+          punishment-vio: 30
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 11
+          setback-vio: 18
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     liquidwalk:
       liquidwalk_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       liquidwalk_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     fastclimb:
       fastclimb_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 25
+          punishment-vio: 35
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 13
+          setback-vio: 21
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     noslow:
       noslow_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 25
+          punishment-vio: 40
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 13
+          setback-vio: 24
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     step:
       step_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 3
+          punishment-vio: 6
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 4
+          setback-vio: 3
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     boat:
       boat_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 35
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 18
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     vehicle:
       vehicle_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 35
+          punishment-vio: 45
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 18
+          setback-vio: 27
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     elytra:
       elytra_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 60
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 36
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       elytra_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 40
+          punishment-vio: 60
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 21
+          setback-vio: 36
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
       elytra_c:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 12
+          punishment-vio: 18
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
           setback-vio: 10
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     trident:
       trident_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 3
+          punishment-vio: 8
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 7
+          setback-vio: 4
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
   # Combat checks
   combat:
     killaura:
@@ -575,67 +575,6 @@ checks:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 6
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 4
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      killaura_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 8
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 5
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      killaura_c:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 4
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 3
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      killaura_d:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 5
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    reach:
-      reach_a:
-        enabled: true
-        punishment:
-          punishable: true
           punishment-vio: 10
           commands:
             - "kick %name% %check%"
@@ -643,89 +582,11 @@ checks:
           setback: false
           setback-vio: 6
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-      reach_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 6
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 4
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    criticals:
-      criticals_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 1
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      criticals_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    autoclicker:
-      autoclicker_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      autoclicker_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    velocity:
-      velocity_a:
+          bedrock: false
+      killaura_b:
         enabled: true
         punishment:
           punishable: true
@@ -736,109 +597,11 @@ checks:
           setback: false
           setback-vio: 7
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-  # Interaction checks
-  interaction:
-    airplace:
-      airplace_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    fastplace:
-      fastplace_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    blockplace:
-      blockplace_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 10
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 6
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      blockplace_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 5
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 3
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    ghostbreak:
-      ghostbreak_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    fastbreak:
-      fastbreak_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 15
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 8
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    autotool:
-      autotool_a:
+          bedrock: false
+      killaura_c:
         enabled: true
         punishment:
           punishable: true
@@ -847,14 +610,44 @@ checks:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 5
+          setback-vio: 4
         detection:
-          min-tps: 5.0
-          max-ping: 400
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-    blockbreak:
-      blockbreak_a:
+          bedrock: false
+      killaura_d:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 4
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    reach:
+      reach_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 14
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 8
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      reach_b:
         enabled: true
         punishment:
           punishable: true
@@ -865,11 +658,12 @@ checks:
           setback: false
           setback-vio: 6
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-      blockbreak_b:
+          bedrock: false
+    criticals:
+      criticals_a:
         enabled: true
         punishment:
           punishable: true
@@ -880,122 +674,155 @@ checks:
           setback: false
           setback-vio: 3
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-    scaffold:
-      scaffold_a:
+          bedrock: false
+      criticals_b:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 10
+          punishment-vio: 6
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 6
+          setback-vio: 3
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-      scaffold_b:
+          bedrock: false
+    autoclicker:
+      autoclicker_a:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 10
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 6
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-  # Packet checks
-  packet:
-    morepackets:
-      morepackets_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 2
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      morepackets_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 2
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    timer:
-      timer_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      timer_b:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 2
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-    badpackets:
-      badpackets_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 5
+          punishment-vio: 8
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
           setback-vio: 4
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-      badpackets_b:
+          bedrock: false
+      autoclicker_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 4
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    velocity:
+      velocity_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 18
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 10
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+  # Interaction checks
+  interaction:
+    airplace:
+      airplace_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    fastplace:
+      fastplace_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    blockplace:
+      blockplace_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 14
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 8
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      blockplace_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 4
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    ghostbreak:
+      ghostbreak_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    fastbreak:
+      fastbreak_a:
         enabled: true
         punishment:
           punishable: true
@@ -1004,28 +831,14 @@ checks:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 19
+          setback-vio: 12
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-      badpackets_c:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 15
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 14
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-      badpackets_d:
+          bedrock: false
+    autotool:
+      autotool_a:
         enabled: true
         punishment:
           punishable: true
@@ -1034,12 +847,199 @@ checks:
             - "kick %name% %check%"
         setback:
           setback: false
+          setback-vio: 6
+        detection:
+          min-tps: 18.0
+          max-ping: 400
+          java: true
+          bedrock: false
+    blockbreak:
+      blockbreak_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 14
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 8
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      blockbreak_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 4
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    scaffold:
+      scaffold_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 14
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 8
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      scaffold_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 14
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 8
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+  # Packet checks
+  packet:
+    morepackets:
+      morepackets_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 5
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      morepackets_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 5
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    timer:
+      timer_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      timer_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    badpackets:
+      badpackets_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 8
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 4
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      badpackets_b:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 25
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 15
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      badpackets_c:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 20
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 12
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+      badpackets_d:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 15
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
           setback-vio: 9
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
   # Inventory checks
   inventory:
     sorting:
@@ -1047,19 +1047,53 @@ checks:
         enabled: true
         punishment:
           punishable: true
-          punishment-vio: 3
+          punishment-vio: 6
           commands:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 2
+          setback-vio: 3
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
+          bedrock: false
     itemswap:
       itemswap_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+  # Player checks
+  player:
+    autobot:
+      autobot_a:
+        enabled: true
+        punishment:
+          punishable: true
+          punishment-vio: 6
+          commands:
+            - "kick %name% %check%"
+        setback:
+          setback: false
+          setback-vio: 3
+        detection:
+          min-tps: 18.0
+          max-ping: 300
+          java: true
+          bedrock: false
+    skinblinker:
+      skinblinker_a:
         enabled: true
         punishment:
           punishable: true
@@ -1068,43 +1102,9 @@ checks:
             - "kick %name% %check%"
         setback:
           setback: false
-          setback-vio: 3
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
-  # Player checks
-  player:
-    autobot:
-      autobot_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 3
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
           setback-vio: 2
         detection:
-          min-tps: 5.0
-          max-ping: 10000
+          min-tps: 18.0
+          max-ping: 300
           java: true
-          bedrock: true
-    skinblinker:
-      skinblinker_a:
-        enabled: true
-        punishment:
-          punishable: true
-          punishment-vio: 2
-          commands:
-            - "kick %name% %check%"
-        setback:
-          setback: false
-          setback-vio: 1
-        detection:
-          min-tps: 5.0
-          max-ping: 10000
-          java: true
-          bedrock: true
+          bedrock: false

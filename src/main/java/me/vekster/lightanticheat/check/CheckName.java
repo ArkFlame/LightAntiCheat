@@ -42,6 +42,7 @@ public enum CheckName {
     BLOCKPLACE_B(CheckType.INTERACTION, "BlockPlace_B", "Reach"),
     GHOSTBREAK_A(CheckType.INTERACTION, "GhostBreak_A", "ThroughBlock"),
     FASTBREAK_A(CheckType.INTERACTION, "FastBreak_A", "MiningSpeed"),
+    AUTOTOOL_A(CheckType.INTERACTION, "AutoTool_A", "ToolSwap"),
     BLOCKBREAK_A(CheckType.INTERACTION, "BlockBreak_A", "Rotation"),
     BLOCKBREAK_B(CheckType.INTERACTION, "BlockBreak_B", "Reach"),
     SCAFFOLD_A(CheckType.INTERACTION, "Scaffold_A", "Rotation"),

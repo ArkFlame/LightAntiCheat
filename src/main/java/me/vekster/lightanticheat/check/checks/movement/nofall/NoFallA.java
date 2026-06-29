@@ -178,7 +178,7 @@ public class NoFallA extends MovementCheck implements Listener {
 
         Map<Integer, Float> eventMap;
         Map<Double, Float> distanceMap;
-        int jumpEffectAmplifier = getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP);
+        int jumpEffectAmplifier = getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP"));
         switch (jumpEffectAmplifier) {
             case 0:
                 eventMap = EVENTS_JUMP_0;
@@ -261,7 +261,7 @@ public class NoFallA extends MovementCheck implements Listener {
 
         if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("LEVITATION")) > 0 ||
                 getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("SLOW_FALLING")) > 0 ||
-                getEffectAmplifier(lacPlayer.cache, PotionEffectType.JUMP) > 5) {
+                getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("JUMP")) > 5) {
             Buffer buffer = getBuffer(player, true);
             buffer.put("effectTime", System.currentTimeMillis());
         }

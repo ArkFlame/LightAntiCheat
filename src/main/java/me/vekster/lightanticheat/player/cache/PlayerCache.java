@@ -15,6 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlayerCache {
 
     public PlayerCache(Player player) {
+        long currentTime = System.currentTimeMillis();
+        lastTeleport = currentTime;
+        lastRespawn = currentTime;
+        lastWorldChange = currentTime;
         history = new History(player);
         fromBlockCache = new BlockCache(player, player.getLocation());
     }

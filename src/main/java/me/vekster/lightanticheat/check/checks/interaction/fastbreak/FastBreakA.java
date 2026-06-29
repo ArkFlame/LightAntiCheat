@@ -192,7 +192,7 @@ public class FastBreakA extends InteractionCheck implements Listener {
         if (!isCheckAllowed(player, lacPlayer))
             return;
 
-        if (getEffectAmplifier(player, PotionEffectType.FAST_DIGGING) > 0) {
+        if (getEffectAmplifier(player, VerUtil.potions.get("FAST_DIGGING")) > 0) {
             Buffer buffer = getBuffer(player);
             buffer.put("effectTime", System.currentTimeMillis());
         }
@@ -206,7 +206,7 @@ public class FastBreakA extends InteractionCheck implements Listener {
         if (!isCheckAllowed(player, lacPlayer, true))
             return;
 
-        if (getEffectAmplifier(lacPlayer.cache, PotionEffectType.FAST_DIGGING) > 0) {
+        if (getEffectAmplifier(lacPlayer.cache, VerUtil.potions.get("FAST_DIGGING")) > 0) {
             Scheduler.runTask(true, () -> {
                 Buffer buffer = getBuffer(player);
                 buffer.put("effectTime", System.currentTimeMillis());

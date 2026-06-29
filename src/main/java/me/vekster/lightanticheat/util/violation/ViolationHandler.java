@@ -59,6 +59,23 @@ public class ViolationHandler implements Listener {
         return vSetback || afterVSetback;
     }
 
+    private static boolean isInsideSolidBlock(Player player, Location location) {
+        for (Block block : CheckUtil.getWithinBlocks(player, location))
+            if (!CheckUtil.isActuallyPassable(block))
+                return true;
+        return false;
+    }
+
+    private static boolean isSafeSetbackLocation(Player player, Location location) {
+        return !isInsideSolidBlock(player, location);
+    }
+
+    private static Location getTopOfCurrentBlock(Location location) {
+        Location result = location.clone();
+        result.setY(Math.floor(result.getY()) + 1.0);
+        return result;
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onFlag(LACViolationEvent event) {
         if (!event.getPlayer().isOnline() || event.getAcPlayer().leaveTime != 0L)
@@ -116,7 +133,7 @@ public class ViolationHandler implements Listener {
                     if (isDownBlocks || i == 25) {
                         blocks.addAll(new HashSet<>(CheckUtil.getDownBlocks(event.getPlayer(), location, 0.05)));
                     } else {
-                        Block block = AsyncUtil.getBlock(event.getPlayer().getLocation());
+                        Block block = AsyncUtil.getBlock(location);
                         if (block != null) {
                             blocks.add(block);
                             blocks.add(block.getRelative(BlockFace.DOWN));
@@ -129,11 +146,10 @@ public class ViolationHandler implements Listener {
                             break;
                         }
                     if (cancel) {
-                        for (Block block : CheckUtil.getWithinBlocks(event.getPlayer())) {
-                            if (!CheckUtil.isActuallyPassable(block)) {
-                                FoliaUtil.teleportPlayer(event.getPlayer(), location.add(0, 1 - (location.getY() % 1), 0));
-                                break;
-                            }
+                        if (isInsideSolidBlock(event.getPlayer(), event.getPlayer().getLocation())) {
+                            Location blockTopLocation = getTopOfCurrentBlock(location);
+                            if (isSafeSetbackLocation(event.getPlayer(), blockTopLocation))
+                                FoliaUtil.teleportPlayer(event.getPlayer(), blockTopLocation);
                         }
                         boolean slab = true;
                         for (Block block : CheckUtil.getDownBlocks(event.getPlayer(), 0.1)) {
@@ -142,7 +158,9 @@ public class ViolationHandler implements Listener {
                                 break;
                             }
                         }
-                        if (slab) FoliaUtil.teleportPlayer(event.getPlayer(), location.subtract(0, 0.5, 0));
+                        Location slabLocation = location.clone().subtract(0, 0.5, 0);
+                        if (slab && isSafeSetbackLocation(event.getPlayer(), slabLocation))
+                            FoliaUtil.teleportPlayer(event.getPlayer(), slabLocation);
                         break;
                     }
                     FoliaUtil.teleportPlayer(event.getPlayer(), location.subtract(0, 1, 0));

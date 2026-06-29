@@ -24,8 +24,8 @@ public class LACPlayerMoveEvent extends Event {
         this.event = event;
         this.player = player;
         this.lacPlayer = lacPlayer;
-        this.from = from;
-        this.to = to;
+        this.from = from.clone();
+        this.to = to.clone();
         this.isPlayerFlying = player.isFlying();
         this.isPlayerInsideVehicle = player.isInsideVehicle();
         this.isPlayerGliding = lacPlayer.isGliding();
@@ -45,11 +45,11 @@ public class LACPlayerMoveEvent extends Event {
     }
 
     public Location getFrom() {
-        return from;
+        return from.clone();
     }
 
     public Location getTo() {
-        return to;
+        return to.clone();
     }
 
     public boolean isPlayerFlying() {

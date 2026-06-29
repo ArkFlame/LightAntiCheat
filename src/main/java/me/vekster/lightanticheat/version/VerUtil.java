@@ -365,6 +365,7 @@ public class VerUtil {
             if (material == null) continue;
             materials.put(material.name().toLowerCase(), material);
         }
+        addAlias(materials, "grass", "short_grass");
         VerUtil.material = new VerEnumValues<>(materials, Material.MAP);
 
         Map<String, Enchantment> enchantments = new HashMap<>();
@@ -374,7 +375,9 @@ public class VerUtil {
             if (key == null) continue;
             enchantments.put(key.toLowerCase(), enchantment);
         }
-        VerUtil.enchantment = new VerEnumValues<>(enchantments, Enchantment.LUCK);
+        addEnchantmentAliases(enchantments);
+        VerUtil.enchantment = new VerEnumValues<>(enchantments,
+                getDefault(enchantments, "luck_of_the_sea", "luck", "unbreaking"));
         Scheduler.runTask(false, () -> {
             Map<String, Enchantment> newerEnchantments = new HashMap<>();
             for (Enchantment enchantment : Enchantment.values()) {
@@ -383,7 +386,9 @@ public class VerUtil {
                 if (key == null) continue;
                 newerEnchantments.put(key.toLowerCase(), enchantment);
             }
-            VerUtil.enchantment = new VerEnumValues<>(newerEnchantments, Enchantment.LUCK);
+            addEnchantmentAliases(newerEnchantments);
+            VerUtil.enchantment = new VerEnumValues<>(newerEnchantments,
+                    getDefault(newerEnchantments, "luck_of_the_sea", "luck", "unbreaking"));
         });
 
         Map<String, EntityType> entityTypes = new HashMap<>();
@@ -391,6 +396,9 @@ public class VerUtil {
             if (entityType == null) continue;
             entityTypes.put(entityType.name().toLowerCase(), entityType);
         }
+        addAlias(entityTypes, "boat", "oak_boat");
+        addAlias(entityTypes, "primed_tnt", "tnt");
+        addAlias(entityTypes, "tnt", "primed_tnt");
         VerUtil.entityTypes = new VerEnumValues<>(entityTypes, EntityType.UNKNOWN);
 
         Map<String, PotionEffectType> potions = new HashMap<>();
@@ -398,6 +406,7 @@ public class VerUtil {
             if (potionEffectType == null) continue;
             potions.put(potionEffectType.getName().toLowerCase(), potionEffectType);
         }
+        addPotionAliases(potions);
         VerUtil.potions = new VerEnumValues<>(potions, PotionEffectType.NIGHT_VISION);
         Scheduler.runTask(false, () -> {
             Map<String, PotionEffectType> newerPotions = new HashMap<>();
@@ -405,8 +414,45 @@ public class VerUtil {
                 if (potionEffectType == null) continue;
                 newerPotions.put(potionEffectType.getName().toLowerCase(), potionEffectType);
             }
+            addPotionAliases(newerPotions);
             VerUtil.potions = new VerEnumValues<>(newerPotions, PotionEffectType.NIGHT_VISION);
         });
+    }
+
+    private static void addEnchantmentAliases(Map<String, Enchantment> enchantments) {
+        addAlias(enchantments, "luck", "luck_of_the_sea");
+        addAlias(enchantments, "luck_of_the_sea", "luck");
+        addAlias(enchantments, "arrow_knockback", "punch");
+        addAlias(enchantments, "punch", "arrow_knockback");
+    }
+
+    private static void addPotionAliases(Map<String, PotionEffectType> potions) {
+        addAlias(potions, "jump", "jump_boost");
+        addAlias(potions, "jump_boost", "jump");
+        addAlias(potions, "fast_digging", "haste");
+        addAlias(potions, "haste", "fast_digging");
+    }
+
+    private static <T> void addAlias(Map<String, T> values, String alias, String... targets) {
+        String normalizedAlias = alias.toLowerCase();
+        if (values.containsKey(normalizedAlias))
+            return;
+        for (String target : targets) {
+            T value = values.get(target.toLowerCase());
+            if (value != null) {
+                values.put(normalizedAlias, value);
+                return;
+            }
+        }
+    }
+
+    private static <T> T getDefault(Map<String, T> values, String... preferredKeys) {
+        for (String key : preferredKeys) {
+            T value = values.get(key.toLowerCase());
+            if (value != null)
+                return value;
+        }
+        return values.isEmpty() ? null : values.values().iterator().next();
     }
 
     static {
@@ -446,6 +492,22 @@ public class VerUtil {
 
     public static double getHeight(Entity entity) {
         return multiVersion.getHeight(entity);
+    }
+
+    public static boolean isBoat(EntityType entityType) {
+        if (entityType == null)
+            return false;
+        String name = entityType.name();
+        return name.equals("BOAT") || name.equals("CHEST_BOAT") ||
+                name.endsWith("_BOAT") || name.endsWith("_CHEST_BOAT") ||
+                name.equals("BAMBOO_RAFT") || name.equals("BAMBOO_CHEST_RAFT");
+    }
+
+    public static boolean isPrimedTnt(EntityType entityType) {
+        if (entityType == null)
+            return false;
+        String name = entityType.name();
+        return name.equals("PRIMED_TNT") || name.equals("TNT");
     }
 
     public static ProjectileSource getSpectralArrowShooter(Entity spectralArrow) {
