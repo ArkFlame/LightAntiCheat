@@ -95,7 +95,7 @@ public class LiquidWalkB extends MovementCheck implements Listener {
             }
         }
 
-        for (Block block : getInteractiveBlocks(player, event.getTo())) {
+        for (Block block : event.getToInteractiveBlocks()) {
             if (!isActuallyPassable(block)) {
                 buffer.put("flags", 0);
                 return;

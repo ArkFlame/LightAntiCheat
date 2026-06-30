@@ -99,7 +99,7 @@ public class LiquidWalkA extends MovementCheck implements Listener {
         }
 
         Material honeyBlock = VerUtil.material.get("HONEY_BLOCK");
-        for (Block block : getInteractiveBlocks(player, event.getTo())) {
+        for (Block block : event.getToInteractiveBlocks()) {
             Material type = block.getType();
             if (type == Material.SLIME_BLOCK || type == honeyBlock)
                 return;

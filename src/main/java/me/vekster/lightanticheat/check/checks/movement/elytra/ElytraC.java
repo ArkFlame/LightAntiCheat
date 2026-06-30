@@ -105,7 +105,7 @@ public class ElytraC extends MovementCheck implements Listener {
         }
 
         Set<Block> interactiveBlocks = new HashSet<>();
-        getInteractiveBlocks(player, event.getTo()).forEach(block -> {
+        event.getToInteractiveBlocks().forEach(block -> {
             interactiveBlocks.add(block);
             interactiveBlocks.add(block.getRelative(BlockFace.UP));
         });

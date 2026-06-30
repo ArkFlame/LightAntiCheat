@@ -1,6 +1,9 @@
 package me.vekster.lightanticheat.event.bus;
 
 import me.vekster.lightanticheat.Main;
+import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.LACMovementChange;
+import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -13,8 +16,11 @@ public final class LACEventBus {
 
     private static final Map<LACEventType, EnumMap<LACEventPriority, CopyOnWriteArrayList<LACEventSubscription>>> BUS =
             new EnumMap<>(LACEventType.class);
+    private static final LACEventType[] TYPES = LACEventType.values();
     private static final LACEventPriority[] PRIORITIES = LACEventPriority.values();
-    private static final Map<LACEventType, LACEventSubscription[]> SNAPSHOTS = new EnumMap<>(LACEventType.class);
+    private static volatile LACEventSubscription[][] SNAPSHOTS = new LACEventSubscription[TYPES.length][];
+    private static volatile LACEventSubscription[][][] MOVEMENT_SNAPSHOTS = new LACEventSubscription[TYPES.length][4][];
+    private static final LACEventSubscription[] EMPTY = new LACEventSubscription[0];
 
     private LACEventBus() {
     }
@@ -55,25 +61,52 @@ public final class LACEventBus {
 
     public static synchronized void unregisterAll() {
         BUS.clear();
-        SNAPSHOTS.clear();
+        final int typeCount = TYPES.length;
+        SNAPSHOTS = new LACEventSubscription[typeCount][];
+        MOVEMENT_SNAPSHOTS = new LACEventSubscription[typeCount][4][];
+    }
+
+    private static int movementMask(final Object event) {
+        if (event instanceof LACAsyncPlayerMoveEvent) {
+            return movementMask(((LACAsyncPlayerMoveEvent) event).getMovementChange());
+        }
+        if (event instanceof LACPlayerMoveEvent) {
+            return movementMask(((LACPlayerMoveEvent) event).getMovementChange());
+        }
+        return -1;
+    }
+
+    private static int movementMask(final LACMovementChange change) {
+        if (change == null) {
+            return -1;
+        }
+        int mask = 0;
+        if (change.isPositionChanged()) {
+            mask |= 1;
+        }
+        if (change.isRotationChanged()) {
+            mask |= 2;
+        }
+        return mask;
     }
 
     public static void call(LACEventType type, Object event) {
         Objects.requireNonNull(type, "type must not be null");
         Objects.requireNonNull(event, "event must not be null");
 
+        final int movementMask = movementMask(event);
         final LACEventSubscription[] subscriptions;
-        synchronized (LACEventBus.class) {
-            subscriptions = SNAPSHOTS.get(type);
+        if (movementMask >= 0) {
+            final LACEventSubscription[][] byMask = MOVEMENT_SNAPSHOTS[type.ordinal()];
+            subscriptions = byMask == null ? EMPTY : byMask[movementMask];
+        } else {
+            subscriptions = SNAPSHOTS[type.ordinal()];
         }
         if (subscriptions == null || subscriptions.length == 0) return;
 
         for (LACEventSubscription subscription : subscriptions) {
-            if (!subscription.shouldCall(event)) {
-                continue;
-            }
             try {
-                subscription.accept(event);
+                subscription.call(event);
             } catch (Exception e) {
                 Main.getInstance().getLogger().log(Level.SEVERE,
                         "Exception in event bus subscription: "
@@ -84,41 +117,72 @@ public final class LACEventBus {
     }
 
     private static synchronized void rebuildAllSnapshots() {
-        SNAPSHOTS.clear();
-        for (LACEventType type : BUS.keySet()) {
-            rebuildSnapshot(type);
+        final int typeCount = TYPES.length;
+        final LACEventSubscription[][] newSnapshots = new LACEventSubscription[typeCount][];
+        final LACEventSubscription[][][] newMovementSnapshots = new LACEventSubscription[typeCount][4][];
+        for (int i = 0; i < typeCount; i++) {
+            final LACEventType type = TYPES[i];
+            newSnapshots[i] = buildSnapshot(type, -1);
+            for (int mask = 0; mask < 4; mask++) {
+                newMovementSnapshots[i][mask] = buildSnapshot(type, mask);
+            }
         }
+        SNAPSHOTS = newSnapshots;
+        MOVEMENT_SNAPSHOTS = newMovementSnapshots;
     }
 
     private static synchronized void rebuildSnapshot(final LACEventType type) {
+        final int index = type.ordinal();
+        final LACEventSubscription[] all = buildSnapshot(type, -1);
+        final LACEventSubscription[][] movement = new LACEventSubscription[4][];
+        for (int mask = 0; mask < movement.length; mask++) {
+            movement[mask] = buildSnapshot(type, mask);
+        }
+        final LACEventSubscription[][] snapshotsCopy = SNAPSHOTS.clone();
+        snapshotsCopy[index] = all;
+        SNAPSHOTS = snapshotsCopy;
+        final LACEventSubscription[][][] movementCopy = MOVEMENT_SNAPSHOTS.clone();
+        movementCopy[index] = movement;
+        MOVEMENT_SNAPSHOTS = movementCopy;
+    }
+
+    private static LACEventSubscription[] buildSnapshot(final LACEventType type, final int mask) {
         final EnumMap<LACEventPriority, CopyOnWriteArrayList<LACEventSubscription>> priorityMap = BUS.get(type);
         if (priorityMap == null) {
-            SNAPSHOTS.remove(type);
-            return;
+            return EMPTY;
         }
         int size = 0;
-        for (LACEventPriority priority : PRIORITIES) {
+        for (final LACEventPriority priority : PRIORITIES) {
             final CopyOnWriteArrayList<LACEventSubscription> subscriptions = priorityMap.get(priority);
             if (subscriptions != null) {
-                size += subscriptions.size();
+                if (mask < 0) {
+                    size += subscriptions.size();
+                } else {
+                    for (final LACEventSubscription sub : subscriptions) {
+                        if (sub.acceptsMask(mask)) {
+                            size++;
+                        }
+                    }
+                }
             }
         }
         if (size == 0) {
-            SNAPSHOTS.remove(type);
-            return;
+            return EMPTY;
         }
         final LACEventSubscription[] snapshot = new LACEventSubscription[size];
         int index = 0;
-        for (LACEventPriority priority : PRIORITIES) {
+        for (final LACEventPriority priority : PRIORITIES) {
             final CopyOnWriteArrayList<LACEventSubscription> subscriptions = priorityMap.get(priority);
             if (subscriptions == null || subscriptions.isEmpty()) {
                 continue;
             }
-            for (LACEventSubscription subscription : subscriptions) {
-                snapshot[index++] = subscription;
+            for (final LACEventSubscription subscription : subscriptions) {
+                if (mask < 0 || subscription.acceptsMask(mask)) {
+                    snapshot[index++] = subscription;
+                }
             }
         }
-        SNAPSHOTS.put(type, snapshot);
+        return snapshot;
     }
 
 }

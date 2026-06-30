@@ -8,13 +8,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public final class BlockMaterialCache {
-
-    private static final ConcurrentMap<UUID, ConcurrentMap<Long, ConcurrentMap<Long, Material>>> BY_WORLD = new ConcurrentHashMap<>();
 
     private BlockMaterialCache() {
     }
@@ -26,11 +21,15 @@ public final class BlockMaterialCache {
         return findBlockAt(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
-    public static Optional<Block> findBlockAt(final World world, final int x, final int y, final int z) {
+    public static Block blockAtOrNull(final World world, final int x, final int y, final int z) {
         if (!isLoadedOwned(world, x >> 4, z >> 4)) {
-            return Optional.empty();
+            return null;
         }
-        return Optional.of(world.getBlockAt(x, y, z));
+        return world.getBlockAt(x, y, z);
+    }
+
+    public static Optional<Block> findBlockAt(final World world, final int x, final int y, final int z) {
+        return Optional.ofNullable(blockAtOrNull(world, x, y, z));
     }
 
     public static Optional<Block> findRelative(final Block block, final BlockFace face) {
@@ -61,16 +60,20 @@ public final class BlockMaterialCache {
         return findType(block.getWorld(), block.getX(), block.getY(), block.getZ());
     }
 
+    public static Material typeAtOrAir(final World world, final int x, final int y, final int z) {
+        final Block block = blockAtOrNull(world, x, y, z);
+        return block == null ? Material.AIR : block.getType();
+    }
+
+    public static Material typeOrAir(final World world, final int x, final int y, final int z) {
+        return typeAtOrAir(world, x, y, z);
+    }
+
     public static Optional<Material> findType(final World world, final int x, final int y, final int z) {
         if (!isLoadedOwned(world, x >> 4, z >> 4)) {
             return Optional.empty();
         }
-        final UUID worldId = world.getUID();
-        final long chunkKey = chunkKey(x >> 4, z >> 4);
-        final long blockKey = blockKey(x, y, z);
-        final ConcurrentMap<Long, ConcurrentMap<Long, Material>> worldMap = BY_WORLD.computeIfAbsent(worldId, ignored -> new ConcurrentHashMap<>());
-        final ConcurrentMap<Long, Material> chunkMap = worldMap.computeIfAbsent(chunkKey, ignored -> new ConcurrentHashMap<>());
-        return Optional.ofNullable(chunkMap.computeIfAbsent(blockKey, ignored -> world.getBlockAt(x, y, z).getType()));
+        return Optional.of(world.getBlockAt(x, y, z).getType());
     }
 
     public static Material typeOrAir(final Block block) {
@@ -82,11 +85,17 @@ public final class BlockMaterialCache {
     }
 
     public static Material relativeTypeOrAir(final Block block, final BlockFace face) {
-        return findRelative(block, face).flatMap(BlockMaterialCache::findType).orElse(Material.AIR);
+        if (block == null || face == null) {
+            return Material.AIR;
+        }
+        return relativeTypeOrAir(block, face.getModX(), face.getModY(), face.getModZ());
     }
 
     public static Material relativeTypeOrAir(final Block block, final int modX, final int modY, final int modZ) {
-        return findRelative(block, modX, modY, modZ).flatMap(BlockMaterialCache::findType).orElse(Material.AIR);
+        if (block == null) {
+            return Material.AIR;
+        }
+        return typeAtOrAir(block.getWorld(), block.getX() + modX, block.getY() + modY, block.getZ() + modZ);
     }
 
     public static boolean isLiquid(final Block block) {
@@ -128,50 +137,19 @@ public final class BlockMaterialCache {
     }
 
     public static void invalidateBlock(final Block block) {
-        if (block == null) {
-            return;
-        }
-        final ConcurrentMap<Long, ConcurrentMap<Long, Material>> worldMap = BY_WORLD.get(block.getWorld().getUID());
-        if (worldMap == null) {
-            return;
-        }
-        final long chunkKey = chunkKey(block.getX() >> 4, block.getZ() >> 4);
-        final ConcurrentMap<Long, Material> chunkMap = worldMap.get(chunkKey);
-        if (chunkMap == null) {
-            return;
-        }
-        chunkMap.remove(blockKey(block.getX(), block.getY(), block.getZ()));
-        if (chunkMap.isEmpty()) {
-            worldMap.remove(chunkKey, chunkMap);
-        }
-        if (worldMap.isEmpty()) {
-            BY_WORLD.remove(block.getWorld().getUID(), worldMap);
-        }
+        // Stateless by design: movement reads are not retained globally.
     }
 
     public static void invalidateChunk(final World world, final int chunkX, final int chunkZ) {
-        if (world == null) {
-            return;
-        }
-        final ConcurrentMap<Long, ConcurrentMap<Long, Material>> worldMap = BY_WORLD.get(world.getUID());
-        if (worldMap == null) {
-            return;
-        }
-        worldMap.remove(chunkKey(chunkX, chunkZ));
-        if (worldMap.isEmpty()) {
-            BY_WORLD.remove(world.getUID(), worldMap);
-        }
+        // Stateless by design: movement reads are not retained globally.
     }
 
     public static void invalidateWorld(final World world) {
-        if (world == null) {
-            return;
-        }
-        BY_WORLD.remove(world.getUID());
+        // Stateless by design: movement reads are not retained globally.
     }
 
     public static void clear() {
-        BY_WORLD.clear();
+        // Stateless by design: movement reads are not retained globally.
     }
 
     private static long chunkKey(final int chunkX, final int chunkZ) {

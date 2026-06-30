@@ -25,10 +25,12 @@ public class BlockCache {
 
     public final Set<Block> withinBlocks;
     public final Set<Material> withinMaterials;
-    public final Boolean withinBlocksPassable;
+    public final boolean withinBlocksPassable;
     public final Set<Block> downBlocks;
     public final Set<Material> downMaterials;
-    public final Boolean downBlocksPassable;
+    public final boolean downBlocksPassable;
+    public final Set<Block> interactiveBlocks;
+    public final Set<Material> interactiveMaterials;
 
     private BlockCache(boolean emptyMarker) {
         this.worldId = null;
@@ -41,6 +43,8 @@ public class BlockCache {
         this.downBlocks = Collections.emptySet();
         this.downMaterials = EnumSet.noneOf(Material.class);
         this.downBlocksPassable = true;
+        this.interactiveBlocks = Collections.emptySet();
+        this.interactiveMaterials = EnumSet.noneOf(Material.class);
     }
 
     public BlockCache(Player player, Location location) {
@@ -55,6 +59,8 @@ public class BlockCache {
             this.downBlocks = Collections.emptySet();
             this.downMaterials = EnumSet.noneOf(Material.class);
             this.downBlocksPassable = true;
+            this.interactiveBlocks = Collections.emptySet();
+            this.interactiveMaterials = EnumSet.noneOf(Material.class);
             return;
         }
 
@@ -72,6 +78,8 @@ public class BlockCache {
             this.downBlocks = Collections.emptySet();
             this.downMaterials = EnumSet.noneOf(Material.class);
             this.downBlocksPassable = true;
+            this.interactiveBlocks = Collections.emptySet();
+            this.interactiveMaterials = EnumSet.noneOf(Material.class);
             return;
         }
 
@@ -96,6 +104,12 @@ public class BlockCache {
                 toDownBlocksPassable = false;
         }
         this.downBlocksPassable = toDownBlocksPassable;
+
+        this.interactiveBlocks = CheckUtil.getInteractiveBlocks(player, location);
+        this.interactiveMaterials = EnumSet.noneOf(Material.class);
+        for (Block block : this.interactiveBlocks) {
+            this.interactiveMaterials.add(BlockMaterialCache.typeOrAir(block));
+        }
     }
 
     public static BlockCache empty() {

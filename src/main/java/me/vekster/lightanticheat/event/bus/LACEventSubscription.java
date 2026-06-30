@@ -8,7 +8,7 @@ final class LACEventSubscription {
     private final Object owner;
     private final String methodName;
     private final LACEventPriority priority;
-    private final LACMovementRequirement movementRequirement;
+    final LACMovementRequirement movementRequirement;
     private final Consumer<Object> consumer;
 
     LACEventSubscription(Object owner, String methodName, LACEventPriority priority,
@@ -46,6 +46,14 @@ final class LACEventSubscription {
     }
 
     void accept(Object event) {
+        consumer.accept(event);
+    }
+
+    boolean acceptsMask(final int movementMask) {
+        return movementRequirement.acceptsMask(movementMask);
+    }
+
+    void call(final Object event) {
         consumer.accept(event);
     }
 

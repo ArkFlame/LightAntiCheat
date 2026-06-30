@@ -55,7 +55,7 @@ import me.vekster.lightanticheat.event.LACEventCaller;
 import me.vekster.lightanticheat.event.bus.LACEventBus;
 import me.vekster.lightanticheat.event.bus.LACEventRegistrar;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
-import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCacheInvalidationListener;
+
 import me.vekster.lightanticheat.listener.invalidping.InvalidPingListener;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.listener.unloadedchunk.UnloadedChunkListener;
@@ -125,8 +125,6 @@ public class Main extends JavaPlugin {
 
         Updater.loadUpdateChecker();
         registerListener(new Updater());
-
-        registerListener(new BlockMaterialCacheInvalidationListener());
 
         registerCheckListener(new FlightA());
         registerCheckListener(new FlightB());

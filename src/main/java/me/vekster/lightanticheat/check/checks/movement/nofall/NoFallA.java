@@ -266,7 +266,7 @@ public class NoFallA extends MovementCheck implements Listener {
             buffer.put("effectTime", System.currentTimeMillis());
         }
 
-        for (Block block : getInteractiveBlocks(player, event.getTo())) {
+        for (Block block : event.getToInteractiveBlocks()) {
             if (isActuallyPassable(block) && isActuallyPassable(block.getRelative(BlockFace.DOWN)))
                 continue;
             Buffer buffer = getBuffer(player, true);

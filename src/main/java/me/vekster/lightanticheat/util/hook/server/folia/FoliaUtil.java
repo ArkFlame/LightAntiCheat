@@ -26,6 +26,17 @@ public final class FoliaUtil {
     private static Method isOwnedByCurrentRegionWorldChunkRadiusMethod;
     private static Method isOwnedByCurrentRegionEntityMethod;
     private static Method isOwnedByCurrentRegionBlockMethod;
+    private static Object globalRegionScheduler;
+    private static Object asyncScheduler;
+    private static Method globalRunMethod;
+    private static Method globalRunDelayedMethod;
+    private static Method globalRunAtFixedRateMethod;
+    private static Method asyncRunNowMethod;
+    private static Method asyncRunDelayedMethod;
+    private static Method asyncRunAtFixedRateMethod;
+    private static volatile Class<?> entitySchedulerClass;
+    private static volatile Method entityExecuteMethod;
+    private static volatile Method entityRunAtFixedRateMethod;
 
     private FoliaUtil() {
     }
@@ -50,6 +61,14 @@ public final class FoliaUtil {
                     .getMethod("isOwnedByCurrentRegion", Entity.class);
             isOwnedByCurrentRegionBlockMethod = Bukkit.getServer().getClass()
                     .getMethod("isOwnedByCurrentRegion", Block.class);
+            globalRegionScheduler = getGlobalRegionSchedulerMethod.invoke(Bukkit.getServer());
+            asyncScheduler = getAsyncSchedulerMethod.invoke(Bukkit.getServer());
+            globalRunMethod = globalRegionScheduler.getClass().getMethod("run", Plugin.class, Consumer.class);
+            globalRunDelayedMethod = globalRegionScheduler.getClass().getMethod("runDelayed", Plugin.class, Consumer.class, long.class);
+            globalRunAtFixedRateMethod = globalRegionScheduler.getClass().getMethod("runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class);
+            asyncRunNowMethod = asyncScheduler.getClass().getMethod("runNow", Plugin.class, Consumer.class);
+            asyncRunDelayedMethod = asyncScheduler.getClass().getMethod("runDelayed", Plugin.class, Consumer.class, long.class, TimeUnit.class);
+            asyncRunAtFixedRateMethod = asyncScheduler.getClass().getMethod("runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class, TimeUnit.class);
         } catch (final ReflectiveOperationException exception) {
             folia = false;
             clearMethods();
@@ -67,50 +86,50 @@ public final class FoliaUtil {
 
     public static void runTask(final Runnable runnable) {
         Objects.requireNonNull(runnable, "runnable");
-        invokeGlobal("run", new Class<?>[]{Plugin.class, Consumer.class}, plugin(), (Consumer<Object>) ignored -> runnable.run());
+        invokeGlobal(globalRunMethod, "run", plugin(), (Consumer<Object>) ignored -> runnable.run());
     }
 
     public static void runTask(final Entity entity, final Runnable runnable) {
         Objects.requireNonNull(entity, "entity");
         Objects.requireNonNull(runnable, "runnable");
-        invokeEntity(entity, "execute", new Class<?>[]{Plugin.class, Runnable.class, Runnable.class, long.class}, plugin(), runnable, null, 1L);
+        invokeEntity(entity, "execute", plugin(), runnable, null, 1L);
     }
 
     public static void runTaskAsynchronously(final Runnable runnable) {
         Objects.requireNonNull(runnable, "runnable");
-        invokeAsync("runNow", new Class<?>[]{Plugin.class, Consumer.class}, plugin(), (Consumer<Object>) ignored -> runnable.run());
+        invokeAsync(asyncRunNowMethod, "runNow", plugin(), (Consumer<Object>) ignored -> runnable.run());
     }
 
     public static void runTaskLater(final Runnable runnable, final long delay) {
         Objects.requireNonNull(runnable, "runnable");
-        invokeGlobal("runDelayed", new Class<?>[]{Plugin.class, Consumer.class, long.class}, plugin(), (Consumer<Object>) ignored -> runnable.run(), Math.max(1L, delay));
+        invokeGlobal(globalRunDelayedMethod, "runDelayed", plugin(), (Consumer<Object>) ignored -> runnable.run(), Math.max(1L, delay));
     }
 
     public static void runTaskLater(final Entity entity, final Runnable runnable, final long delay) {
         Objects.requireNonNull(entity, "entity");
         Objects.requireNonNull(runnable, "runnable");
-        invokeEntity(entity, "execute", new Class<?>[]{Plugin.class, Runnable.class, Runnable.class, long.class}, plugin(), runnable, null, Math.max(1L, delay));
+        invokeEntity(entity, "execute", plugin(), runnable, null, Math.max(1L, delay));
     }
 
     public static void runTaskLaterAsynchronously(final Runnable runnable, final long delay) {
         Objects.requireNonNull(runnable, "runnable");
-        invokeAsync("runDelayed", new Class<?>[]{Plugin.class, Consumer.class, long.class, TimeUnit.class}, plugin(), (Consumer<Object>) ignored -> runnable.run(), ticksToMillis(delay), TimeUnit.MILLISECONDS);
+        invokeAsync(asyncRunDelayedMethod, "runDelayed", plugin(), (Consumer<Object>) ignored -> runnable.run(), ticksToMillis(delay), TimeUnit.MILLISECONDS);
     }
 
     public static void runTaskTimer(final Runnable task, final long delay, final long period) {
         Objects.requireNonNull(task, "task");
-        invokeGlobal("runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, long.class, long.class}, plugin(), (Consumer<Object>) ignored -> task.run(), Math.max(1L, delay), Math.max(1L, period));
+        invokeGlobal(globalRunAtFixedRateMethod, "runAtFixedRate", plugin(), (Consumer<Object>) ignored -> task.run(), Math.max(1L, delay), Math.max(1L, period));
     }
 
     public static void runTaskTimer(final Entity entity, final Runnable task, final long delay, final long period) {
         Objects.requireNonNull(entity, "entity");
         Objects.requireNonNull(task, "task");
-        invokeEntity(entity, "runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, Runnable.class, long.class, long.class}, plugin(), (Consumer<Object>) ignored -> task.run(), null, Math.max(1L, delay), Math.max(1L, period));
+        invokeEntity(entity, "runAtFixedRate", plugin(), (Consumer<Object>) ignored -> task.run(), null, Math.max(1L, delay), Math.max(1L, period));
     }
 
     public static void runTaskTimerAsynchronously(final Runnable task, final long delay, final long period) {
         Objects.requireNonNull(task, "task");
-        invokeAsync("runAtFixedRate", new Class<?>[]{Plugin.class, Consumer.class, long.class, long.class, TimeUnit.class}, plugin(), (Consumer<Object>) ignored -> task.run(), ticksToMillis(delay), ticksToMillis(period), TimeUnit.MILLISECONDS);
+        invokeAsync(asyncRunAtFixedRateMethod, "runAtFixedRate", plugin(), (Consumer<Object>) ignored -> task.run(), ticksToMillis(delay), ticksToMillis(period), TimeUnit.MILLISECONDS);
     }
 
     public static void teleportPlayer(final Player player, final Location location) {
@@ -188,30 +207,45 @@ public final class FoliaUtil {
         return Math.max(1L, ticks) * 50L;
     }
 
-    private static void invokeGlobal(final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+    private static void invokeGlobal(final Method method, final String methodName, final Object... args) {
         try {
-            final Object scheduler = getGlobalRegionSchedulerMethod.invoke(Bukkit.getServer());
-            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+            method.invoke(globalRegionScheduler, args);
         } catch (final ReflectiveOperationException exception) {
             Main.getInstance().getLogger().warning("Failed to invoke Folia global scheduler method " + methodName + ".");
         }
     }
 
-    private static void invokeAsync(final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+    private static void invokeAsync(final Method method, final String methodName, final Object... args) {
         try {
-            final Object scheduler = getAsyncSchedulerMethod.invoke(Bukkit.getServer());
-            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+            method.invoke(asyncScheduler, args);
         } catch (final ReflectiveOperationException exception) {
             Main.getInstance().getLogger().warning("Failed to invoke Folia async scheduler method " + methodName + ".");
         }
     }
 
-    private static void invokeEntity(final Entity entity, final String methodName, final Class<?>[] parameterTypes, final Object... args) {
+    private static void invokeEntity(final Entity entity, final String methodName, final Object... args) {
         try {
             final Object scheduler = entityGetSchedulerMethod.invoke(entity);
-            scheduler.getClass().getMethod(methodName, parameterTypes).invoke(scheduler, args);
+            cacheEntitySchedulerMethods(scheduler);
+            final Method method = "execute".equals(methodName) ? entityExecuteMethod : entityRunAtFixedRateMethod;
+            method.invoke(scheduler, args);
         } catch (final ReflectiveOperationException exception) {
             Main.getInstance().getLogger().warning("Failed to invoke Folia entity scheduler method " + methodName + " for entity " + entity.getUniqueId() + ".");
+        }
+    }
+
+    private static void cacheEntitySchedulerMethods(final Object scheduler) throws NoSuchMethodException {
+        final Class<?> schedulerClass = scheduler.getClass();
+        if (schedulerClass.equals(entitySchedulerClass) && entityExecuteMethod != null && entityRunAtFixedRateMethod != null) {
+            return;
+        }
+        synchronized (FoliaUtil.class) {
+            if (schedulerClass.equals(entitySchedulerClass) && entityExecuteMethod != null && entityRunAtFixedRateMethod != null) {
+                return;
+            }
+            entityExecuteMethod = schedulerClass.getMethod("execute", Plugin.class, Runnable.class, Runnable.class, long.class);
+            entityRunAtFixedRateMethod = schedulerClass.getMethod("runAtFixedRate", Plugin.class, Consumer.class, Runnable.class, long.class, long.class);
+            entitySchedulerClass = schedulerClass;
         }
     }
 
@@ -234,5 +268,16 @@ public final class FoliaUtil {
         isOwnedByCurrentRegionWorldChunkRadiusMethod = null;
         isOwnedByCurrentRegionEntityMethod = null;
         isOwnedByCurrentRegionBlockMethod = null;
+        globalRegionScheduler = null;
+        asyncScheduler = null;
+        globalRunMethod = null;
+        globalRunDelayedMethod = null;
+        globalRunAtFixedRateMethod = null;
+        asyncRunNowMethod = null;
+        asyncRunDelayedMethod = null;
+        asyncRunAtFixedRateMethod = null;
+        entitySchedulerClass = null;
+        entityExecuteMethod = null;
+        entityRunAtFixedRateMethod = null;
     }
 }

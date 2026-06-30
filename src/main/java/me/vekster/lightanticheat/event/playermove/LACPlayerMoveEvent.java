@@ -15,10 +15,10 @@ public class LACPlayerMoveEvent extends Event {
     private final Location to;
     private final Location from;
     private final LACMovementChange movementChange;
-    private final Boolean isPlayerFlying;
-    private final Boolean isPlayerInsideVehicle;
-    private final Boolean isPlayerGliding;
-    private final Boolean isPlayerRiptiding;
+    private final boolean isPlayerFlying;
+    private final boolean isPlayerInsideVehicle;
+    private final boolean isPlayerGliding;
+    private final boolean isPlayerRiptiding;
 
     public LACPlayerMoveEvent(PlayerMoveEvent event, Player player,
                               LACPlayer lacPlayer, Location from, Location to) {

@@ -1,11 +1,14 @@
 package me.vekster.lightanticheat.check;
 
 import java.util.List;
+import java.util.Locale;
 
 public class CheckSetting {
 
     public CheckSetting(CheckName name) {
         this.name = name;
+        this.apiName = name.name().toLowerCase(Locale.ROOT);
+        this.bypassPermission = "lightanticheat.bypass." + this.apiName;
     }
 
     public CheckName name;
@@ -19,5 +22,7 @@ public class CheckSetting {
     public boolean setback;
     public int setbackVio;
     public List<String> punishmentCommands;
+    public final String apiName;
+    public final String bypassPermission;
 
 }

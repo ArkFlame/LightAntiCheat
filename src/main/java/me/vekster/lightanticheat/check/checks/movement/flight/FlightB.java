@@ -75,7 +75,7 @@ public class FlightB extends MovementCheck implements Listener {
         Buffer buffer = getBuffer(player, true);
 
         boolean isInteractiveBlock = false;
-        for (Block block : getInteractiveBlocks(player, event.getTo())) {
+        for (Block block : event.getToInteractiveBlocks()) {
             if (!isActuallyPassable(block) && getAngle(player, block) <= 100) {
                 isInteractiveBlock = true;
                 break;

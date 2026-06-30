@@ -14,7 +14,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -43,15 +42,15 @@ public class BlockUtil {
         if (endY % 1.0 == 0) maxY--;
         int maxZ = (int) Math.floor(endZ);
         if (endZ % 1.0 == 0) maxZ--;
-        Set<Block> blocks = new HashSet<>((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1));
+        BlockArraySet.Builder blocks = BlockArraySet.builder((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1));
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    BlockMaterialCache.findBlockAt(world, x, y, z).ifPresent(blocks::add);
+                    blocks.add(BlockMaterialCache.blockAtOrNull(world, x, y, z));
                 }
             }
         }
-        return blocks;
+        return blocks.build();
     }
 
     public static Set<Block> getWithinBlocks(Entity player, Location location) {
@@ -92,20 +91,18 @@ public class BlockUtil {
         int maxZ = (int) Math.floor(endZ);
         if (endZ % 1.0 == 0) maxZ--;
         maxZ++;
-        Set<Block> blocks = new HashSet<>((maxX - minX + 1) * (maxZ - minZ + 1) * 2);
+        BlockArraySet.Builder blocks = BlockArraySet.builder((maxX - minX + 1) * (maxZ - minZ + 1) * 2);
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 if (removeCorners && (z == minZ || z == maxZ) && (x == minX || x == maxX))
                     continue;
-                Block block = AsyncUtil.getBlockAt(world, x, minY, z);
-                if (block != null) blocks.add(block);
+                blocks.add(BlockMaterialCache.blockAtOrNull(world, x, minY, z));
                 if (location.getY() % 1.0 != 0) {
-                    block = AsyncUtil.getBlockAt(world, x, minY + 1, z);
-                    if (block != null) blocks.add(block);
+                    blocks.add(BlockMaterialCache.blockAtOrNull(world, x, minY + 1, z));
                 }
             }
         }
-        return blocks;
+        return blocks.build();
     }
 
     private static Set<Block> getInteractiveBlocks(Entity player, Location location, boolean removeCorners) {
@@ -154,14 +151,13 @@ public class BlockUtil {
         if (endX % 1.0 == 0) maxX--;
         int maxZ = (int) Math.floor(endZ);
         if (endZ % 1.0 == 0) maxZ--;
-        Set<Block> blocks = new HashSet<>((maxX - minX + 1) * (maxZ - minZ + 1));
+        BlockArraySet.Builder blocks = BlockArraySet.builder((maxX - minX + 1) * (maxZ - minZ + 1));
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                Block block = AsyncUtil.getBlockAt(world, x, minY - (location.getY() % 1 == 0 ? 1 : 0), z);
-                if (block != null) blocks.add(block);
+                blocks.add(BlockMaterialCache.blockAtOrNull(world, x, minY - (location.getY() % 1 == 0 ? 1 : 0), z));
             }
         }
-        return blocks;
+        return blocks.build();
     }
 
     public static Set<Block> getDownBlocks(Entity player, Location location, double padding) {

@@ -72,11 +72,11 @@ public class CheckUtil extends PassableUtil {
 
             if (ConfigManager.Config.Permission.perCheckBypassPermission &&
                     CooldownUtil.hasPermission(lacPlayer.cooldown, player,
-                            ACPermission.BYPASS + "." + checkSetting.name.name().toLowerCase(), async))
+                            checkSetting.bypassPermission, async))
                 return false;
         }
 
-        DetectionStatus detectionStatus = ApiUtil.getCheckStatus(player, checkSetting.name.name().toLowerCase());
+        DetectionStatus detectionStatus = ApiUtil.getCheckStatus(player, checkSetting);
         if (ConfigManager.Config.Api.enabled && detectionStatus != DetectionStatus.ENABLED)
             return false;
 

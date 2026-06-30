@@ -111,11 +111,11 @@ public class JumpB extends MovementCheck implements Listener {
         buffer.put("lastJumpEffect", jumpEffectAmplifier);
 
         Set<Material> interactiveMaterials = new HashSet<>();
-        getInteractiveBlocks(player, event.getFrom()).forEach(block -> {
+        event.getFromInteractiveBlocks().forEach(block -> {
             interactiveMaterials.add(BlockMaterialCache.typeOrAir(block));
             interactiveMaterials.add(BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP));
         });
-        getInteractiveBlocks(player, event.getTo()).forEach(block -> {
+        event.getToInteractiveBlocks().forEach(block -> {
             interactiveMaterials.add(BlockMaterialCache.typeOrAir(block));
             interactiveMaterials.add(BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP));
         });

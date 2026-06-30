@@ -61,13 +61,16 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static Block getBlock(Location location) {
-        return BlockMaterialCache.findBlockAt(location).orElse(null);
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        return BlockMaterialCache.blockAtOrNull(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     @Nullable
     @SecureAsync
     public static Block getBlockAt(World world, int x, int y, int z) {
-        return BlockMaterialCache.findBlockAt(world, x, y, z).orElse(null);
+        return BlockMaterialCache.blockAtOrNull(world, x, y, z);
     }
 
     @Nullable
@@ -79,7 +82,7 @@ public class AsyncUtil {
         if (location.getWorld() != null && !location.getWorld().equals(world)) {
             return null;
         }
-        return BlockMaterialCache.findBlockAt(world, location.getBlockX(), location.getBlockY(), location.getBlockZ()).orElse(null);
+        return BlockMaterialCache.blockAtOrNull(world, location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     @SecureAsync

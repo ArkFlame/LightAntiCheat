@@ -22,12 +22,12 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     private final Location to;
     private final Location from;
     private final LACMovementChange movementChange;
-    private final Boolean isPlayerClimbing;
-    private final Boolean isPlayerInWater;
-    private final Boolean isPlayerFlying;
-    private final Boolean isPlayerInsideVehicle;
-    private final Boolean isPlayerGliding;
-    private final Boolean isPlayerRiptiding;
+    private final boolean isPlayerClimbing;
+    private final boolean isPlayerInWater;
+    private final boolean isPlayerFlying;
+    private final boolean isPlayerInsideVehicle;
+    private final boolean isPlayerGliding;
+    private final boolean isPlayerRiptiding;
     private final BlockCache fromBlockCache;
     private final BlockCache toBlockCache;
 
@@ -36,17 +36,19 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
 
         this.player = event.getPlayer();
         this.lacPlayer = event.getLacPlayer();
-        this.from = event.getFrom().clone();
-        this.to = event.getTo().clone();
+        final Location eventFrom = event.getFrom();
+        final Location eventTo = event.getTo();
+        this.from = eventFrom.clone();
+        this.to = eventTo.clone();
         this.movementChange = event.getMovementChange();
         this.isPlayerFlying = event.isPlayerFlying();
         this.isPlayerInsideVehicle = event.isPlayerInsideVehicle();
         this.isPlayerGliding = event.isPlayerGliding();
         this.isPlayerRiptiding = event.isPlayerRiptiding();
 
-        boolean sameWorld = sameWorld(event.getFrom(), event.getTo());
+        boolean sameWorld = sameWorld(eventFrom, eventTo);
         BlockCache existingFromCache = lacPlayer.cache.fromBlockCache;
-        this.fromBlockCache = (sameWorld && existingFromCache != null && existingFromCache.matchesWorld(event.getFrom()))
+        this.fromBlockCache = (sameWorld && existingFromCache != null && existingFromCache.matchesWorld(eventFrom))
                 ? existingFromCache
                 : BlockCache.empty();
 
@@ -55,7 +57,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
                 && FoliaUtil.isStable(event.getPlayer())
                 && (!FoliaUtil.isFolia()
                     || (FoliaUtil.isOwnedByCurrentRegion(event.getPlayer())
-                        && FoliaUtil.isOwnedByCurrentRegion(event.getTo(), 1)));
+                        && FoliaUtil.isOwnedByCurrentRegion(eventTo, 1)));
         if (canReadToBlocks) {
             this.toBlockCache = new BlockCache(player, to);
             isPlayerClimbing = lacPlayer.isClimbing();
@@ -149,7 +151,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         return fromBlockCache.withinMaterials;
     }
 
-    public Boolean isFromWithinBlocksPassable() {
+    public boolean isFromWithinBlocksPassable() {
         return fromBlockCache.withinBlocksPassable;
     }
 
@@ -161,7 +163,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         return fromBlockCache.downMaterials;
     }
 
-    public Boolean isFromDownBlocksPassable() {
+    public boolean isFromDownBlocksPassable() {
         return fromBlockCache.downBlocksPassable;
     }
 
@@ -173,7 +175,7 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         return toBlockCache.withinMaterials;
     }
 
-    public Boolean isToWithinBlocksPassable() {
+    public boolean isToWithinBlocksPassable() {
         return toBlockCache.withinBlocksPassable;
     }
 
@@ -185,8 +187,24 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         return toBlockCache.downMaterials;
     }
 
-    public Boolean isToDownBlocksPassable() {
+    public boolean isToDownBlocksPassable() {
         return toBlockCache.downBlocksPassable;
+    }
+
+    public Set<Block> getFromInteractiveBlocks() {
+        return fromBlockCache.interactiveBlocks;
+    }
+
+    public Set<Material> getFromInteractiveMaterials() {
+        return fromBlockCache.interactiveMaterials;
+    }
+
+    public Set<Block> getToInteractiveBlocks() {
+        return toBlockCache.interactiveBlocks;
+    }
+
+    public Set<Material> getToInteractiveMaterials() {
+        return toBlockCache.interactiveMaterials;
     }
 
     public HandlerList getHandlers() {

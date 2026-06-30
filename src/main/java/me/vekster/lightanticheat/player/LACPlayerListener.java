@@ -51,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LACPlayerListener implements Listener {
 
     private static final Set<LACPlayer> LEFT_PLAYERS = new HashSet<>();
-    private static Map<UUID, LACPlayer> asyncPlayers = new ConcurrentHashMap<>();
+    private static final Map<UUID, LACPlayer> asyncPlayers = new ConcurrentHashMap<>();
 
     public static void loadLACPlayerListener() {
         loadLacPlayersOnReload();
@@ -71,6 +71,7 @@ public class LACPlayerListener implements Listener {
 
         if (!LACPlayer.PLAYERS.containsKey(uuid)) {
             LACPlayer.createLacPlayer(player);
+            asyncPlayers.put(uuid, LACPlayer.getLacPlayer(uuid));
             return;
         }
 
@@ -80,6 +81,7 @@ public class LACPlayerListener implements Listener {
         lacPlayer.cache = new PlayerCache(player);
         lacPlayer.cooldown = new PlayerCooldown();
         CooldownUtil.isBedrockPlayer(lacPlayer.cooldown, player);
+        asyncPlayers.put(uuid, lacPlayer);
     }
 
     private static void loadLacPlayersOnReload() {
@@ -516,7 +518,7 @@ public class LACPlayerListener implements Listener {
             markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN), honeyBlockType);
             markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, 0, -2, 0), honeyBlockType);
         }
-        for (Block block : CheckUtil.getInteractiveBlocks(event.getPlayer(), event.getTo())) {
+        for (Block block : event.getToInteractiveBlocks()) {
             markHorizontalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.typeOrAir(block), honeyBlockType);
             markHorizontalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP), honeyBlockType);
         }
@@ -745,32 +747,29 @@ public class LACPlayerListener implements Listener {
 
     private static void loadSchedulerCacheUpdated() {
         Scheduler.runTaskTimer(() -> {
-            Map<Player, LACPlayer> players = new ConcurrentHashMap<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
-                LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-                if (lacPlayer == null) continue;
-                players.put(player, lacPlayer);
-            }
-            Scheduler.runTaskAsynchronously(true, () -> {
-                Map<UUID, LACPlayer> asyncPlayers = new ConcurrentHashMap<>();
-                players.forEach((player, lacPlayer) -> {
-                    asyncPlayers.put(player.getUniqueId(), lacPlayer);
-                    PlayerCache cache = lacPlayer.cache;
-                    Scheduler.entityThread(player, () -> {
-                        cache.sneakingTicks = increase(player.isSneaking(), cache.sneakingTicks);
-                        cache.sprintingTicks = increase(player.isSprinting(), cache.sprintingTicks);
-                        cache.swimmingTicks = increase(lacPlayer.isSwimming(), cache.swimmingTicks);
-                        cache.climbingTicks = increase(lacPlayer.isClimbing(), cache.climbingTicks);
-                        cache.glidingTicks = increase(lacPlayer.isGliding(), cache.glidingTicks);
-                        cache.riptidingTicks = increase(lacPlayer.isRiptiding(), cache.riptidingTicks);
-                        cache.flyingTicks = increase(player.isFlying(), cache.flyingTicks);
-                        cache.blockingTicks = increase(player.isBlocking(), cache.blockingTicks);
-                        if (player.isInsideVehicle())
-                            cache.lastInsideVehicle = System.currentTimeMillis();
-                    });
+                LACPlayer lacPlayer = asyncPlayers.get(player.getUniqueId());
+                if (lacPlayer == null || lacPlayer.leaveTime != 0L) {
+                    continue;
+                }
+                PlayerCache cache = lacPlayer.cache;
+                Scheduler.entityThread(player, () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    cache.sneakingTicks = increase(player.isSneaking(), cache.sneakingTicks);
+                    cache.sprintingTicks = increase(player.isSprinting(), cache.sprintingTicks);
+                    cache.swimmingTicks = increase(lacPlayer.isSwimming(), cache.swimmingTicks);
+                    cache.climbingTicks = increase(lacPlayer.isClimbing(), cache.climbingTicks);
+                    cache.glidingTicks = increase(lacPlayer.isGliding(), cache.glidingTicks);
+                    cache.riptidingTicks = increase(lacPlayer.isRiptiding(), cache.riptidingTicks);
+                    cache.flyingTicks = increase(player.isFlying(), cache.flyingTicks);
+                    cache.blockingTicks = increase(player.isBlocking(), cache.blockingTicks);
+                    if (player.isInsideVehicle()) {
+                        cache.lastInsideVehicle = System.currentTimeMillis();
+                    }
                 });
-                setAsyncPlayers(asyncPlayers);
-            });
+            }
         }, 1, 1);
     }
 
@@ -784,10 +783,6 @@ public class LACPlayerListener implements Listener {
 
     public static Map<UUID, LACPlayer> getAsyncPlayers() {
         return asyncPlayers;
-    }
-
-    private static void setAsyncPlayers(Map<UUID, LACPlayer> asyncPlayers) {
-        LACPlayerListener.asyncPlayers = asyncPlayers;
     }
 
 }

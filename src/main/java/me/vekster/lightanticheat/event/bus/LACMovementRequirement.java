@@ -33,6 +33,24 @@ public enum LACMovementRequirement {
         return true;
     }
 
+    public boolean acceptsMask(final int movementMask) {
+        if (this == ANY) {
+            return true;
+        }
+        final boolean position = (movementMask & 1) != 0;
+        final boolean rotation = (movementMask & 2) != 0;
+        if (this == POSITION) {
+            return position;
+        }
+        if (this == ROTATION) {
+            return rotation;
+        }
+        if (this == POSITION_AND_ROTATION) {
+            return position && rotation;
+        }
+        return true;
+    }
+
     private static LACMovementChange movementChange(final Object event) {
         if (event instanceof LACAsyncPlayerMoveEvent) {
             return ((LACAsyncPlayerMoveEvent) event).getMovementChange();

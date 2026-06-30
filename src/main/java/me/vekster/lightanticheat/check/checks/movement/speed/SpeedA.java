@@ -140,11 +140,11 @@ public class SpeedA extends MovementCheck implements Listener {
         }
 
         Set<Block> interactiveBlocks = new HashSet<>();
-        getInteractiveBlocks(player, event.getFrom()).forEach(block -> {
+        event.getFromInteractiveBlocks().forEach(block -> {
             interactiveBlocks.add(block);
             interactiveBlocks.add(block.getRelative(BlockFace.UP));
         });
-        getInteractiveBlocks(player, event.getTo()).forEach(block -> {
+        event.getToInteractiveBlocks().forEach(block -> {
             interactiveBlocks.add(block);
             interactiveBlocks.add(block.getRelative(BlockFace.UP));
         });
@@ -371,11 +371,11 @@ public class SpeedA extends MovementCheck implements Listener {
         }
 
         Set<Block> interactiveBlocks = new HashSet<>();
-        getInteractiveBlocks(player, event.getFrom()).forEach(block -> {
+        event.getFromInteractiveBlocks().forEach(block -> {
             interactiveBlocks.add(block);
             interactiveBlocks.add(block.getRelative(BlockFace.UP));
         });
-        getInteractiveBlocks(player, event.getTo()).forEach(block -> {
+        event.getToInteractiveBlocks().forEach(block -> {
             interactiveBlocks.add(block);
             interactiveBlocks.add(block.getRelative(BlockFace.UP));
         });

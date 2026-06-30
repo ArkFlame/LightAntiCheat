@@ -4,6 +4,7 @@ import me.vekster.lightanticheat.api.CheckType;
 import me.vekster.lightanticheat.api.DetectionStatus;
 import me.vekster.lightanticheat.api.InstanceHolder;
 import me.vekster.lightanticheat.check.CheckName;
+import me.vekster.lightanticheat.check.CheckSetting;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -15,7 +16,34 @@ public class ApiUtil {
 
     public static final Set<String> CHECK_NAMES = ConcurrentHashMap.newKeySet();
     public static final Map<String, Set<String>> CHECK_NAMES_BY_TYPE = new ConcurrentHashMap<>();
-    public static final Map<Map<UUID, String>, Long> DISABLED_CHECKS = new ConcurrentHashMap<>();
+    public static final Map<DisabledCheckKey, Long> DISABLED_CHECKS = new ConcurrentHashMap<>();
+
+    private static final class DisabledCheckKey {
+        private final UUID uuid;
+        private final String checkName;
+
+        private DisabledCheckKey(final UUID uuid, final String checkName) {
+            this.uuid = Objects.requireNonNull(uuid, "uuid");
+            this.checkName = Objects.requireNonNull(checkName, "checkName");
+        }
+
+        @Override
+        public boolean equals(final Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof DisabledCheckKey)) {
+                return false;
+            }
+            final DisabledCheckKey other = (DisabledCheckKey) object;
+            return uuid.equals(other.uuid) && checkName.equals(other.checkName);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * uuid.hashCode() + checkName.hashCode();
+        }
+    }
 
     static {
         for (CheckName checkName : CheckName.values()) {
@@ -34,7 +62,7 @@ public class ApiUtil {
             @Override
             public void run() {
                 DISABLED_CHECKS.entrySet().removeIf(entry -> {
-                    Player player = Bukkit.getPlayer(entry.getKey().keySet().iterator().next());
+                    Player player = Bukkit.getPlayer(entry.getKey().uuid);
                     if (player == null)
                         return true;
                     if (entry.getValue() != 0L && entry.getValue() < System.currentTimeMillis())
@@ -59,8 +87,7 @@ public class ApiUtil {
         checkName = checkName.toLowerCase();
         if (!CHECK_NAMES.contains(checkName))
             return false;
-        Map<UUID, String> disabledCheck = new HashMap<>();
-        disabledCheck.put(player.getUniqueId(), checkName);
+        DisabledCheckKey disabledCheck = new DisabledCheckKey(player.getUniqueId(), checkName);
         if (!DISABLED_CHECKS.containsKey(disabledCheck)) {
             DISABLED_CHECKS.put(disabledCheck, System.currentTimeMillis() + duration);
             return true;
@@ -77,8 +104,7 @@ public class ApiUtil {
         checkName = checkName.toLowerCase();
         if (!CHECK_NAMES.contains(checkName))
             return false;
-        Map<UUID, String> disabledCheck = new HashMap<>();
-        disabledCheck.put(player.getUniqueId(), checkName);
+        DisabledCheckKey disabledCheck = new DisabledCheckKey(player.getUniqueId(), checkName);
         if (!DISABLED_CHECKS.containsKey(disabledCheck)) {
             DISABLED_CHECKS.put(disabledCheck, 0L);
             return true;
@@ -95,18 +121,27 @@ public class ApiUtil {
         checkName = checkName.toLowerCase();
         if (!CHECK_NAMES.contains(checkName))
             return false;
-        Map<UUID, String> disabledCheck = new HashMap<>();
-        disabledCheck.put(player.getUniqueId(), checkName);
+        DisabledCheckKey disabledCheck = new DisabledCheckKey(player.getUniqueId(), checkName);
         DISABLED_CHECKS.remove(disabledCheck);
         return true;
     }
 
+    public static DetectionStatus getCheckStatus(final Player player, final CheckSetting checkSetting) {
+        if (player == null || checkSetting == null) {
+            return DetectionStatus.DISABLED;
+        }
+        return getCheckStatusLowercase(player, checkSetting.apiName);
+    }
+
     public static DetectionStatus getCheckStatus(Player player, String checkName) {
         checkName = checkName.toLowerCase();
+        return getCheckStatusLowercase(player, checkName);
+    }
+
+    private static DetectionStatus getCheckStatusLowercase(final Player player, final String checkName) {
         if (!CHECK_NAMES.contains(checkName))
             return DetectionStatus.DISABLED;
-        Map<UUID, String> disabledCheck = new HashMap<>();
-        disabledCheck.put(player.getUniqueId(), checkName);
+        final DisabledCheckKey disabledCheck = new DisabledCheckKey(player.getUniqueId(), checkName);
         if (!DISABLED_CHECKS.containsKey(disabledCheck))
             return DetectionStatus.ENABLED;
         if (DISABLED_CHECKS.get(disabledCheck) == 0L)
