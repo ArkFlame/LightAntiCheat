@@ -37,6 +37,17 @@ import java.util.Set;
 public class CheckUtil extends PassableUtil {
 
     @SecureAsync
+    public static boolean shouldSkipJavaWhenBedrockOnly(final Player player, final LACPlayer lacPlayer, final boolean async) {
+        if (!ConfigManager.Config.GeyserHook.bedrockOnly) {
+            return false;
+        }
+        if (player == null || lacPlayer == null) {
+            return true;
+        }
+        return !FloodgateHook.isBedrockPlayer(player, async);
+    }
+
+    @SecureAsync
     public static boolean isCheckAllowed(CheckSetting checkSetting, Player player, LACPlayer lacPlayer, boolean async) {
         if (checkSetting == null || player == null || lacPlayer == null)
             return false;
@@ -48,6 +59,12 @@ public class CheckUtil extends PassableUtil {
             });
             return false;
         }
+
+        boolean bedrock = FloodgateHook.isBedrockPlayer(player, async);
+        if (ConfigManager.Config.GeyserHook.bedrockOnly && !bedrock)
+            return false;
+        if (!bedrock && !checkSetting.detectJava || bedrock && !checkSetting.detectBedrock)
+            return false;
 
         if (!ConfigManager.Config.Permission.disableAllBypassPermissions) {
             if (CooldownUtil.hasPermission(lacPlayer.cooldown, player, ACPermission.BYPASS, async))
@@ -68,11 +85,6 @@ public class CheckUtil extends PassableUtil {
         if (TPSCalculator.getTPS() < checkSetting.minTps)
             return false;
 
-        boolean bedrock = FloodgateHook.isBedrockPlayer(player, async);
-        if (ConfigManager.Config.GeyserHook.bedrockOnly && !bedrock)
-            return false;
-        if (!bedrock && !checkSetting.detectJava || bedrock && !checkSetting.detectBedrock)
-            return false;
         if (FloodgateHook.isCancelledCombat(checkSetting.name, player, async))
             return false;
 

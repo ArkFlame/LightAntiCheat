@@ -43,17 +43,42 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         this.isPlayerInsideVehicle = event.isPlayerInsideVehicle();
         this.isPlayerGliding = event.isPlayerGliding();
         this.isPlayerRiptiding = event.isPlayerRiptiding();
-        this.fromBlockCache = lacPlayer.cache.fromBlockCache;
-        if (movementChange.isPositionChanged() && FoliaUtil.isStable(event.getPlayer())) {
+
+        boolean sameWorld = sameWorld(event.getFrom(), event.getTo());
+        BlockCache existingFromCache = lacPlayer.cache.fromBlockCache;
+        this.fromBlockCache = (sameWorld && existingFromCache != null && existingFromCache.matchesWorld(event.getFrom()))
+                ? existingFromCache
+                : BlockCache.empty();
+
+        boolean canReadToBlocks = sameWorld
+                && movementChange.isPositionChanged()
+                && FoliaUtil.isStable(event.getPlayer())
+                && (!FoliaUtil.isFolia()
+                    || (FoliaUtil.isOwnedByCurrentRegion(event.getPlayer())
+                        && FoliaUtil.isOwnedByCurrentRegion(event.getTo(), 1)));
+        if (canReadToBlocks) {
             this.toBlockCache = new BlockCache(player, to);
             isPlayerClimbing = lacPlayer.isClimbing();
             isPlayerInWater = lacPlayer.isInWater();
         } else {
-            toBlockCache = fromBlockCache;
+            this.toBlockCache = this.fromBlockCache;
             isPlayerClimbing = false;
             isPlayerInWater = false;
         }
-        lacPlayer.cache.fromBlockCache = this.toBlockCache;
+
+        if (sameWorld && toBlockCache.isReadable()) {
+            lacPlayer.cache.fromBlockCache = this.toBlockCache;
+        } else if (!sameWorld) {
+            lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        }
+    }
+
+    private static boolean sameWorld(final Location first, final Location second) {
+        return first != null
+                && second != null
+                && first.getWorld() != null
+                && second.getWorld() != null
+                && first.getWorld().getUID().equals(second.getWorld().getUID());
     }
 
     public Player getPlayer() {

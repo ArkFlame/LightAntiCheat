@@ -5,6 +5,8 @@ import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
 import me.vekster.lightanticheat.event.playerbreakblock.LACPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockCache;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.entity.CachedEntity;
@@ -25,6 +27,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.util.Vector;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
@@ -42,8 +45,6 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
-import org.bukkit.util.Vector;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -78,6 +79,7 @@ public class LACPlayerListener implements Listener {
         lacPlayer.leaveTime = 0;
         lacPlayer.cache = new PlayerCache(player);
         lacPlayer.cooldown = new PlayerCooldown();
+        CooldownUtil.isBedrockPlayer(lacPlayer.cooldown, player);
     }
 
     private static void loadLacPlayersOnReload() {
@@ -358,6 +360,7 @@ public class LACPlayerListener implements Listener {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         lacPlayer.cache.lastTeleport = System.currentTimeMillis();
+        lacPlayer.cache.fromBlockCache = BlockCache.empty();
     }
 
     @EventHandler
@@ -366,6 +369,7 @@ public class LACPlayerListener implements Listener {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         lacPlayer.cache.lastWorldChange = System.currentTimeMillis();
+        lacPlayer.cache.fromBlockCache = BlockCache.empty();
     }
 
     @EventHandler
@@ -382,6 +386,7 @@ public class LACPlayerListener implements Listener {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         lacPlayer.cache.lastRespawn = System.currentTimeMillis();
+        lacPlayer.cache.fromBlockCache = BlockCache.empty();
     }
 
     @EventHandler
@@ -498,7 +503,7 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastSlimeHoneyBlock(LACAsyncPlayerMoveEvent event) {
-        if (AsyncUtil.getBlock(event.getFrom()) == AsyncUtil.getBlock(event.getTo()))
+        if (sameBlockPosition(event.getFrom(), event.getTo()))
             return;
 
         long currentTime = System.currentTimeMillis();
@@ -507,39 +512,13 @@ public class LACPlayerListener implements Listener {
         Material honeyBlockType = VerUtil.material.get("HONEY_BLOCK");
         PlayerCache cache = event.getLacPlayer().cache;
         for (Block block : event.getToDownBlocks()) {
-            Block downBlock = block.getRelative(BlockFace.DOWN);
-            Block downDownBlock = downBlock.getRelative(BlockFace.DOWN);
-            if (block.getType() == Material.SLIME_BLOCK || downBlock.getType() == Material.SLIME_BLOCK ||
-                    downDownBlock.getType() == Material.SLIME_BLOCK) {
-                cache.lastSlimeBlock = currentTime;
-                cache.lastSlimeBlockVertical = currentTime;
-                cache.vectorOnSlimeBlock = vector;
-                cache.vectorOnSlimeBlockVertical = vector;
-            } else if (block.getType() == honeyBlockType || downBlock.getType() == honeyBlockType ||
-                    downDownBlock.getType() == honeyBlockType) {
-                cache.lastHoneyBlock = currentTime;
-                cache.lastHoneyBlockVertical = currentTime;
-                cache.vectorOnHoneyBlock = vector;
-                cache.vectorOnHoneyBlockVertical = vector;
-            }
+            markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.typeOrAir(block), honeyBlockType);
+            markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN), honeyBlockType);
+            markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, 0, -2, 0), honeyBlockType);
         }
-        Set<Block> interactiveBlocks = new HashSet<>();
         for (Block block : CheckUtil.getInteractiveBlocks(event.getPlayer(), event.getTo())) {
-            interactiveBlocks.add(block);
-            interactiveBlocks.add(block.getRelative(BlockFace.UP));
-        }
-        for (Block block : interactiveBlocks) {
-            if (block.getType() == Material.SLIME_BLOCK) {
-                cache.lastSlimeBlock = currentTime;
-                cache.lastSlimeBlockHorizontal = currentTime;
-                cache.vectorOnSlimeBlock = vector;
-                cache.vectorOnSlimeBlockHorizontal = vector;
-            } else if (block.getType() == honeyBlockType) {
-                cache.lastHoneyBlock = currentTime;
-                cache.lastHoneyBlockHorizontal = currentTime;
-                cache.vectorOnHoneyBlock = vector;
-                cache.vectorOnHoneyBlockHorizontal = vector;
-            }
+            markHorizontalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.typeOrAir(block), honeyBlockType);
+            markHorizontalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP), honeyBlockType);
         }
 
         boolean eventGround = cache.history.onEvent.onGround.get(HistoryElement.FROM).towardsFalse;
@@ -576,6 +555,46 @@ public class LACPlayerListener implements Listener {
             if (changedHorizontalDirection(cache.vectorOnHoneyBlock, vector) ||
                     changedVerticalDirectionStrict(cache.vectorOnHoneyBlock, vector))
                 cache.lastHoneyBlock = 0;
+        }
+    }
+
+    private static boolean sameBlockPosition(final Location first, final Location second) {
+        if (first == null || second == null || first.getWorld() == null || second.getWorld() == null) {
+            return false;
+        }
+        return first.getWorld().getUID().equals(second.getWorld().getUID())
+                && first.getBlockX() == second.getBlockX()
+                && first.getBlockY() == second.getBlockY()
+                && first.getBlockZ() == second.getBlockZ();
+    }
+
+    private static void markVerticalSlimeHoney(final PlayerCache cache, final long currentTime, final Vector vector,
+                                               final Material material, final Material honeyBlockType) {
+        if (material == Material.SLIME_BLOCK) {
+            cache.lastSlimeBlock = currentTime;
+            cache.lastSlimeBlockVertical = currentTime;
+            cache.vectorOnSlimeBlock = vector;
+            cache.vectorOnSlimeBlockVertical = vector;
+        } else if (material == honeyBlockType) {
+            cache.lastHoneyBlock = currentTime;
+            cache.lastHoneyBlockVertical = currentTime;
+            cache.vectorOnHoneyBlock = vector;
+            cache.vectorOnHoneyBlockVertical = vector;
+        }
+    }
+
+    private static void markHorizontalSlimeHoney(final PlayerCache cache, final long currentTime, final Vector vector,
+                                                 final Material material, final Material honeyBlockType) {
+        if (material == Material.SLIME_BLOCK) {
+            cache.lastSlimeBlock = currentTime;
+            cache.lastSlimeBlockHorizontal = currentTime;
+            cache.vectorOnSlimeBlock = vector;
+            cache.vectorOnSlimeBlockHorizontal = vector;
+        } else if (material == honeyBlockType) {
+            cache.lastHoneyBlock = currentTime;
+            cache.lastHoneyBlockHorizontal = currentTime;
+            cache.vectorOnHoneyBlock = vector;
+            cache.vectorOnHoneyBlockHorizontal = vector;
         }
     }
 

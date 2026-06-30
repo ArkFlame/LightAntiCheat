@@ -2,11 +2,13 @@ package me.vekster.lightanticheat.util.hook.plugin;
 
 import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
 import me.vekster.lightanticheat.util.config.ConfigManager;
 import me.vekster.lightanticheat.util.cooldown.CooldownUtil;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -126,16 +128,16 @@ public class FloodgateHook {
             return false;
         if (checkName == CheckName.SPEED_B) {
             for (Block block : CheckUtil.getDownBlocks(player, 0.12))
-                if (block.getType().name().endsWith("_STAIRS"))
+                if (BlockMaterialCache.typeOrAir(block).name().endsWith("_STAIRS"))
                     return true;
         }
         if (checkName == CheckName.STEP_A) {
             for (Block block : CheckUtil.getDownBlocks(player, 0.12))
-                if (block.getType().name().endsWith("_STAIRS"))
+                if (BlockMaterialCache.typeOrAir(block).name().endsWith("_STAIRS"))
                     return true;
             for (Block block : CheckUtil.getCollisionBlockLayer(player))
-                if (block.getType().name().endsWith("_STAIRS") ||
-                        block.getRelative(BlockFace.UP).getType().name().endsWith("_STAIRS"))
+                if (BlockMaterialCache.typeOrAir(block).name().endsWith("_STAIRS") ||
+                        BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP).name().endsWith("_STAIRS"))
                     return true;
         }
         return false;

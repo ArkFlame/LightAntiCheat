@@ -4,11 +4,13 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.player.PlayerCheck;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.cooldown.CooldownUtil;
+import me.vekster.lightanticheat.util.detection.CheckUtil;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Location;
@@ -140,7 +142,7 @@ public class AutoBotA extends PlayerCheck implements Listener {
         }
 
         for (Block block : getCollisionBlockLayer(player, player.getLocation()))
-            if (!isActuallyPassable(block) || !isActuallyPassable(block.getRelative(BlockFace.UP)))
+            if (!isActuallyPassable(block) || !BlockMaterialCache.findRelative(block, BlockFace.UP).map(CheckUtil::isActuallyPassable).orElse(true))
                 return;
 
         if (event.getFrom().getYaw() % 5 == 0 &&

@@ -4,6 +4,7 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
@@ -85,7 +86,7 @@ public class TridentA extends MovementCheck implements Listener {
         }
 
         for (Block block : event.getToWithinBlocks())
-            if (!isActuallyPassable(block) && block.getType() != Material.WATER) {
+            if (!isActuallyPassable(block) && BlockMaterialCache.typeOrAir(block) != Material.WATER) {
                 buffer.put("cancelTime", currentTime);
                 return;
             }

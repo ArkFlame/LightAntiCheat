@@ -45,6 +45,8 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+            return;
         LACPlayerMoveEvent lacPlayerMoveEvent = new LACPlayerMoveEvent(event, player, lacPlayer, event.getFrom(), event.getTo());
         if (!FoliaUtil.isStable(player))
             return;
@@ -61,6 +63,8 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (CheckUtil.isExternalNPC(event.getEntity()))
             return;
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+            return;
         if (!FoliaUtil.isStable(player))
             return;
         LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
@@ -72,6 +76,8 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+            return;
         LACPlayerPlaceBlockEvent lacPlayerPlaceBlockEvent = new LACPlayerPlaceBlockEvent(event, player, lacPlayer,
                 event.getBlock(), event.getBlockAgainst(), event.getBlockReplacedState());
         if (!FoliaUtil.isStable(player))
@@ -85,6 +91,8 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+            return;
         LACPlayerBreakBlockEvent lacPlayerBreakBlockEvent = new LACPlayerBreakBlockEvent(event, player, lacPlayer, event.getBlock());
         if (!FoliaUtil.isStable(player))
             return;
@@ -98,6 +106,8 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (sender == null) return nmsPacket;
         LACPlayer lacPlayer = LACPlayerListener.getAsyncPlayers().getOrDefault(sender.getUniqueId(), null);
         if (lacPlayer == null || lacPlayer.leaveTime != 0L || !sender.isOnline())
+            return nmsPacket;
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(sender, lacPlayer, true))
             return nmsPacket;
         LACAsyncPacketReceiveEvent event = new LACAsyncPacketReceiveEvent(sender, lacPlayer, nmsPacket);
         Scheduler.entityThread(sender, true, () -> {

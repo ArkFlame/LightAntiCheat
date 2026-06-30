@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.util.async;
 
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
@@ -60,78 +61,30 @@ public class AsyncUtil {
     @Nullable
     @SecureAsync
     public static Block getBlock(Location location) {
-        if (FoliaUtil.isFolia())
-            return FoliaUtil.isOwnedByCurrentRegion(location, 0) ? location.getBlock() : null;
-        if (Bukkit.isPrimaryThread())
-            return location.getBlock();
-
-        if (isUnstableLegacy()) {
-            CompletableFuture<Block> future = new CompletableFuture<>();
-            Scheduler.runTask(true, () -> future.complete(location.getBlock()));
-            try {
-                return future.get(100, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                return null;
-            }
-        }
-
-        World world = AsyncUtil.getWorld(location);
-        if (world == null) return null;
-        if (world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
-            return world.getBlockAt(location);
-        } else {
-            return null;
-        }
+        return BlockMaterialCache.findBlockAt(location).orElse(null);
     }
 
     @Nullable
     @SecureAsync
     public static Block getBlockAt(World world, int x, int y, int z) {
-        if (FoliaUtil.isFolia())
-            return FoliaUtil.isOwnedByCurrentRegion(world, x >> 4, z >> 4, 0) ? world.getBlockAt(x, y, z) : null;
-        if (Bukkit.isPrimaryThread())
-            return world.getBlockAt(x, y, z);
-
-        if (isUnstableLegacy()) {
-            CompletableFuture<Block> future = new CompletableFuture<>();
-            Scheduler.runTask(true, () -> future.complete(world.getBlockAt(x, y, z)));
-            try {
-                return future.get(100, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                return null;
-            }
-        }
-
-        if (world.isChunkLoaded(x >> 4, z >> 4)) {
-            return world.getBlockAt(x, y, z);
-        } else {
-            return null;
-        }
+        return BlockMaterialCache.findBlockAt(world, x, y, z).orElse(null);
     }
 
     @Nullable
     @SecureAsync
     public static Block getBlockAt(World world, Location location) {
-        if (FoliaUtil.isFolia())
-            return FoliaUtil.isOwnedByCurrentRegion(location, 0) ? world.getBlockAt(location) : null;
-        if (Bukkit.isPrimaryThread())
-            return world.getBlockAt(location);
-
-        if (isUnstableLegacy()) {
-            CompletableFuture<Block> future = new CompletableFuture<>();
-            Scheduler.runTask(true, () -> future.complete(world.getBlockAt(location)));
-            try {
-                return future.get(100, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                return null;
-            }
-        }
-
-        if (world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
-            return world.getBlockAt(location);
-        } else {
+        if (world == null || location == null) {
             return null;
         }
+        if (location.getWorld() != null && !location.getWorld().equals(world)) {
+            return null;
+        }
+        return BlockMaterialCache.findBlockAt(world, location.getBlockX(), location.getBlockY(), location.getBlockZ()).orElse(null);
+    }
+
+    @SecureAsync
+    public static boolean isChunkLoaded(final World world, final int chunkX, final int chunkZ) {
+        return BlockMaterialCache.isLoadedOwned(world, chunkX, chunkZ);
     }
 
     @SecureAsync

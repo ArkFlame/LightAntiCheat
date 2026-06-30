@@ -1,10 +1,13 @@
 package me.vekster.lightanticheat.util.detection.specific;
 
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+
+import java.util.Locale;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,20 +32,20 @@ public class PassableUtil extends GroundUtil {
     }
 
     public static boolean isActuallyPassable(Block block) {
-        if (FoliaUtil.isFolia() && !FoliaUtil.isOwnedByCurrentRegion(block))
+        if (block == null || !BlockMaterialCache.isLoadedOwned(block))
             return true;
-        String downBlockName = block.getRelative(BlockFace.DOWN).getType().name().toLowerCase();
+        String downBlockName = BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN).name().toLowerCase(Locale.ROOT);
         if (downBlockName.endsWith("_wall") || downBlockName.endsWith("_fence") ||
                 downBlockName.endsWith("_fence_gate") || downBlockName.endsWith("shulker_box") ||
                 downBlockName.endsWith("_door"))
             return false;
 
-        if (block.isEmpty())
+        if (BlockMaterialCache.isEmpty(block))
             return true;
-        if (!VerUtil.isPassable(block) || block.isLiquid())
+        if (!VerUtil.isPassable(block) || BlockMaterialCache.isLiquid(block))
             return false;
 
-        Material material = block.getType();
+        Material material = BlockMaterialCache.typeOrAir(block);
         if (material == Material.STRING || material == Material.LEVER ||
                 material == Material.TRIPWIRE_HOOK || material == Material.REDSTONE ||
                 material == Material.ITEM_FRAME || material == VerUtil.material.get("GLOW_ITEM_FRAME") ||
@@ -59,7 +62,7 @@ public class PassableUtil extends GroundUtil {
         if (material == Material.SNOW)
             return VerUtil.getSnowLayers(block) > 1;
 
-        String typeName = material.name().toLowerCase();
+        String typeName = material.name().toLowerCase(Locale.ROOT);
         if (typeName.endsWith("_button") || typeName.endsWith("_pressure_plate") ||
                 typeName.endsWith("_banner") || typeName.endsWith("_rail") ||
                 typeName.endsWith("_sign") || typeName.endsWith("_sapling"))

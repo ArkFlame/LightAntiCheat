@@ -4,6 +4,7 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
@@ -73,8 +74,8 @@ public class NoSlowA extends MovementCheck implements Listener {
             return;
 
         for (Block block : event.getToWithinBlocks()) {
-            if (block.getType() == VerUtil.material.get("COBWEB") ||
-                    block.getType() == VerUtil.material.get("WEB") ||
+            if (BlockMaterialCache.typeOrAir(block) == VerUtil.material.get("COBWEB") ||
+                    BlockMaterialCache.typeOrAir(block) == VerUtil.material.get("WEB") ||
                     isActuallyPassable(block))
                 continue;
             buffer.put("cobwebEvents", 0);
@@ -82,8 +83,8 @@ public class NoSlowA extends MovementCheck implements Listener {
         }
 
         for (Block block : event.getFromWithinBlocks()) {
-            if (block.getType() == VerUtil.material.get("COBWEB") ||
-                    block.getType() == VerUtil.material.get("WEB") ||
+            if (BlockMaterialCache.typeOrAir(block) == VerUtil.material.get("COBWEB") ||
+                    BlockMaterialCache.typeOrAir(block) == VerUtil.material.get("WEB") ||
                     isActuallyPassable(block))
                 continue;
             buffer.put("cobwebEvents", 0);

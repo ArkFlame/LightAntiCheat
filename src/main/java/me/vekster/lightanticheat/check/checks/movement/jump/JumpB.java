@@ -5,6 +5,7 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
@@ -111,12 +112,12 @@ public class JumpB extends MovementCheck implements Listener {
 
         Set<Material> interactiveMaterials = new HashSet<>();
         getInteractiveBlocks(player, event.getFrom()).forEach(block -> {
-            interactiveMaterials.add(block.getType());
-            interactiveMaterials.add(block.getRelative(BlockFace.UP).getType());
+            interactiveMaterials.add(BlockMaterialCache.typeOrAir(block));
+            interactiveMaterials.add(BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP));
         });
         getInteractiveBlocks(player, event.getTo()).forEach(block -> {
-            interactiveMaterials.add(block.getType());
-            interactiveMaterials.add(block.getRelative(BlockFace.UP).getType());
+            interactiveMaterials.add(BlockMaterialCache.typeOrAir(block));
+            interactiveMaterials.add(BlockMaterialCache.relativeTypeOrAir(block, BlockFace.UP));
         });
         if (interactiveMaterials.contains(Material.SLIME_BLOCK) || interactiveMaterials.contains(VerUtil.material.get("HONEY_BLOCK"))) {
             buffer.put("jumpHeight", 0.0);
@@ -124,13 +125,13 @@ public class JumpB extends MovementCheck implements Listener {
         }
 
         Set<Material> downMaterials = new HashSet<>();
-        getDownBlocks(player, event.getTo(), 0.45).forEach(block -> downMaterials.add(block.getType()));
+        getDownBlocks(player, event.getTo(), 0.45).forEach(block -> downMaterials.add(BlockMaterialCache.typeOrAir(block)));
         getDownBlocks(player, event.getFrom(), 0.45).forEach(block -> {
-            downMaterials.add(block.getType());
-            downMaterials.add(block.getRelative(BlockFace.DOWN).getType());
+            downMaterials.add(BlockMaterialCache.typeOrAir(block));
+            downMaterials.add(BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN));
         });
         getDownBlocks(player, cache.history.onEvent.location.get(HistoryElement.FIRST), 0.40)
-                .forEach(block -> downMaterials.add(block.getType()));
+                .forEach(block -> downMaterials.add(BlockMaterialCache.typeOrAir(block)));
         if (downMaterials.contains(Material.SLIME_BLOCK) || downMaterials.contains(VerUtil.material.get("HONEY_BLOCK"))) {
             buffer.put("jumpHeight", 0.0);
             return;

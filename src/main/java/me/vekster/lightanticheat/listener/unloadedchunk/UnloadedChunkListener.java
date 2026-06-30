@@ -3,6 +3,7 @@ package me.vekster.lightanticheat.listener.unloadedchunk;
 import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.config.ConfigManager;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
@@ -64,7 +65,7 @@ public class UnloadedChunkListener implements Listener {
         Location location = player.getLocation();
         World world = AsyncUtil.getWorld(player);
         if (world == null) world = player.getWorld();
-        if (world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
+        if (BlockMaterialCache.isLoadedOwned(world, location.getBlockX() >> 4, location.getBlockZ() >> 4))
             return;
         FROZEN_PLAYERS.add(player.getUniqueId());
     }

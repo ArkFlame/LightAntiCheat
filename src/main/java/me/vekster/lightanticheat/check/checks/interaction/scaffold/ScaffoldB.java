@@ -3,6 +3,7 @@ package me.vekster.lightanticheat.check.checks.interaction.scaffold;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.event.playerplaceblock.LACAsyncPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -41,7 +42,7 @@ public class ScaffoldB extends InteractionCheck implements Listener {
             return;
 
         for (Block withinBlock : getWithinBlocks(player)) {
-            if (withinBlock.getType() != Material.AIR)
+            if (BlockMaterialCache.typeOrAir(withinBlock) != Material.AIR)
                 return;
         }
 

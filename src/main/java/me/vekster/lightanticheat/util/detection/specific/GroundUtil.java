@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.util.detection.specific;
 
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.entity.CachedEntity;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
@@ -7,6 +8,7 @@ import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.detection.LeanTowards;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.VerUtil;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -119,14 +121,15 @@ public class GroundUtil extends BlockUtil {
         boolean notPassable = false;
         boolean occluding = true;
         for (Block block : downBlocks) {
-            String downBlockName = block.getRelative(BlockFace.DOWN).getType().name().toLowerCase();
+            String downBlockName = BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN).name().toLowerCase(Locale.ROOT);
             if (!VerUtil.isPassable(block) || downBlockName.endsWith("_wall") || downBlockName.endsWith("_fence") ||
                     downBlockName.endsWith("_fence_gate") || downBlockName.endsWith("shulker_box") ||
                     downBlockName.endsWith("_door")) {
                 notPassable = true;
                 if (!occluding) break;
             }
-            if (!block.getType().isOccluding()) {
+            Material material = BlockMaterialCache.typeOrAir(block);
+            if (material == Material.AIR || !material.isOccluding()) {
                 occluding = false;
                 if (notPassable) break;
             }

@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.util.detection.specific;
 
+import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
@@ -10,7 +11,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 
 import java.util.Collections;
@@ -39,22 +39,18 @@ public class BlockUtil {
         int minZ = (int) Math.floor(startZ);
         int maxX = (int) Math.floor(endX);
         if (endX % 1.0 == 0) maxX--;
-        int maxZ = (int) Math.floor(endZ);
-        if (endZ % 1.0 == 0) maxZ--;
-        Set<Block> blocks = new HashSet<>((maxX - minX + 1) * (maxZ - minZ + 1));
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                Block block = AsyncUtil.getBlockAt(world, x, minY, z);
-                if (block != null) blocks.add(block);
-            }
-        }
         int maxY = (int) Math.floor(endY);
         if (endY % 1.0 == 0) maxY--;
-        Set<Block> higherBlocks = new HashSet<>((maxY - minY) * blocks.size());
-        for (int y = minY + 1; y <= maxY; y++)
-            for (Block block : blocks)
-                higherBlocks.add(block.getRelative(BlockFace.UP, y - minY));
-        blocks.addAll(higherBlocks);
+        int maxZ = (int) Math.floor(endZ);
+        if (endZ % 1.0 == 0) maxZ--;
+        Set<Block> blocks = new HashSet<>((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1));
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    BlockMaterialCache.findBlockAt(world, x, y, z).ifPresent(blocks::add);
+                }
+            }
+        }
         return blocks;
     }
 
