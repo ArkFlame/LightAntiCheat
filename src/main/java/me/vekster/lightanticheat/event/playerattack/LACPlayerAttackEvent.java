@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.event.playerattack;
 
+import me.vekster.lightanticheat.event.context.LACPlayerContextEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
 import org.bukkit.entity.Entity;
@@ -9,18 +10,16 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 
-public class LACPlayerAttackEvent extends Event {
+public class LACPlayerAttackEvent extends Event implements LACPlayerContextEvent {
     private static final HandlerList handlers = new HandlerList();
     private EntityDamageByEntityEvent event;
-    private Player player;
-    private LACPlayer lacPlayer;
+    private final LACPlayer.Context context;
     private Entity entity;
     private boolean isEntityAttackCause;
 
-    public LACPlayerAttackEvent(EntityDamageByEntityEvent event, Player player, LACPlayer lacPlayer, Entity entity) {
+    public LACPlayerAttackEvent(EntityDamageByEntityEvent event, LACPlayer.Context context, Entity entity) {
         this.event = event;
-        this.player = player;
-        this.lacPlayer = lacPlayer;
+        this.context = context;
         this.entity = entity;
         this.isEntityAttackCause = event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK;
     }
@@ -30,11 +29,15 @@ public class LACPlayerAttackEvent extends Event {
     }
 
     public Player getPlayer() {
-        return player;
+        return context.player();
     }
 
     public LACPlayer getLacPlayer() {
-        return lacPlayer;
+        return context.owner();
+    }
+
+    public LACPlayer.Context getContext() {
+        return context;
     }
 
     public Entity getEntity() {

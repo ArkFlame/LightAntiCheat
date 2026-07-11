@@ -1,24 +1,27 @@
 package me.vekster.lightanticheat.event.playermove;
 
+import me.vekster.lightanticheat.Main;
+import me.vekster.lightanticheat.event.context.LACPlayerContextEvent;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockCache;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
+public class LACAsyncPlayerMoveEvent extends Event implements Cancellable, LACPlayerContextEvent {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
-    private final Player player;
-    private final LACPlayer lacPlayer;
+    private final AtomicBoolean setbackScheduled = new AtomicBoolean();
+    private final LACPlayer.Context context;
     private final Location to;
     private final Location from;
     private final LACMovementChange movementChange;
@@ -34,8 +37,11 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     public LACAsyncPlayerMoveEvent(LACPlayerMoveEvent event) {
         super(!FoliaUtil.isFolia());
 
-        this.player = event.getPlayer();
-        this.lacPlayer = event.getLacPlayer();
+        final LACPlayer lacPlayer = event.getLacPlayer();
+        final org.bukkit.entity.Player player = event.getPlayer();
+        final Optional<LACPlayer.Context> maybeContext = lacPlayer.capture(player);
+        this.context = maybeContext.orElse(null);
+
         final Location eventFrom = event.getFrom();
         final Location eventTo = event.getTo();
         this.from = eventFrom.clone();
@@ -47,31 +53,32 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
         this.isPlayerRiptiding = event.isPlayerRiptiding();
 
         boolean sameWorld = sameWorld(eventFrom, eventTo);
-        BlockCache existingFromCache = lacPlayer.cache.fromBlockCache;
-        this.fromBlockCache = (sameWorld && existingFromCache != null && existingFromCache.matchesWorld(eventFrom))
+        final BlockCache existingFromCache = this.context != null ? this.context.cache().fromBlockCache : null;
+        this.fromBlockCache = (sameWorld && existingFromCache != null && existingFromCache.matches(eventFrom))
                 ? existingFromCache
                 : BlockCache.empty();
 
         boolean canReadToBlocks = sameWorld
                 && movementChange.isPositionChanged()
-                && FoliaUtil.isStable(event.getPlayer())
+                && this.context != null
+                && this.context.isCurrent()
                 && (!FoliaUtil.isFolia()
-                    || (FoliaUtil.isOwnedByCurrentRegion(event.getPlayer())
+                    || (FoliaUtil.isOwnedByCurrentRegion(this.context.player())
                         && FoliaUtil.isOwnedByCurrentRegion(eventTo, 1)));
         if (canReadToBlocks) {
-            this.toBlockCache = new BlockCache(player, to);
-            isPlayerClimbing = lacPlayer.isClimbing();
-            isPlayerInWater = lacPlayer.isInWater();
+            this.toBlockCache = BlockCache.capture(this.context, to);
+            isPlayerClimbing = toBlockCache.playerClimbing;
+            isPlayerInWater = toBlockCache.playerInWater;
         } else {
             this.toBlockCache = this.fromBlockCache;
             isPlayerClimbing = false;
             isPlayerInWater = false;
         }
 
-        if (sameWorld && toBlockCache.isReadable()) {
-            lacPlayer.cache.fromBlockCache = this.toBlockCache;
-        } else if (!sameWorld) {
-            lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        if (sameWorld && toBlockCache.isReadable() && this.context != null) {
+            this.context.cache().fromBlockCache = this.toBlockCache;
+        } else if (!sameWorld && this.context != null) {
+            this.context.cache().fromBlockCache = BlockCache.empty();
         }
     }
 
@@ -83,12 +90,28 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
                 && first.getWorld().getUID().equals(second.getWorld().getUID());
     }
 
-    public Player getPlayer() {
-        return player;
+    @Override
+    public LACPlayer.Context getContext() {
+        return context;
+    }
+
+    public org.bukkit.entity.Player getPlayer() {
+        return context != null ? context.player() : null;
     }
 
     public LACPlayer getLacPlayer() {
-        return lacPlayer;
+        return context != null ? context.owner() : null;
+    }
+
+    @Override
+    public boolean canDispatch() {
+        if (context == null || !context.isCurrent()) {
+            return false;
+        }
+        if (!movementChange.isPositionChanged()) {
+            return true;
+        }
+        return toBlockCache.isReadable();
     }
 
     public Location getFrom() {
@@ -223,11 +246,15 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable {
     @Override
     public void setCancelled(boolean cancel) {
         cancelled = cancel;
-        if (cancelled) {
-            Scheduler.entityThread(getPlayer(), true, () -> {
-                if (cancelled) {
-                    FoliaUtil.teleportPlayer(getPlayer(), getFrom());
-                }
+        if (cancel && setbackScheduled.compareAndSet(false, true)) {
+            LACPlayerManager.execute(context, true, ctx -> {
+                if (!cancelled || !ctx.isCurrent()) return;
+                FoliaUtil.teleportPlayerAsync(ctx.player(), getFrom()).whenComplete((success, throwable) -> {
+                    if (throwable != null) {
+                        Main.getInstance().getLogger().warning(
+                                "LAC setback teleport failed for " + ctx.player().getName() + ": " + throwable.getMessage());
+                    }
+                });
             });
         }
     }

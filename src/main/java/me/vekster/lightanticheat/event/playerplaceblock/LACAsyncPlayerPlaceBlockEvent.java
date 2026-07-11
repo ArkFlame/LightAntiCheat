@@ -1,18 +1,18 @@
 package me.vekster.lightanticheat.event.playerplaceblock;
 
+import me.vekster.lightanticheat.event.context.LACPlayerContextEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
+import org.bukkit.entity.Player;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class LACAsyncPlayerPlaceBlockEvent extends Event {
+public class LACAsyncPlayerPlaceBlockEvent extends Event implements LACPlayerContextEvent {
     private static final HandlerList handlers = new HandlerList();
-    private Player player;
-    private LACPlayer lacPlayer;
+    private final LACPlayer.Context context;
     private Block block;
     private Block blockAgainst;
     private BlockState blockReplacedState;
@@ -22,21 +22,24 @@ public class LACAsyncPlayerPlaceBlockEvent extends Event {
     public LACAsyncPlayerPlaceBlockEvent(LACPlayerPlaceBlockEvent event) {
         super(!FoliaUtil.isFolia());
 
-        this.player = event.getPlayer();
-        this.lacPlayer = event.getLacPlayer();
+        this.context = event.getContext();
         this.block = event.getBlock();
         this.blockAgainst = event.getBlockAgainst();
         this.blockReplacedState = event.getBlockReplacedState();
-        this.location = event.getPlayer().getLocation().clone();
-        this.eyeLocation = event.getPlayer().getLocation().clone();
+        this.location = event.getContext().player().getLocation().clone();
+        this.eyeLocation = event.getContext().player().getLocation().clone();
+    }
+
+    public LACPlayer.Context getContext() {
+        return context;
     }
 
     public Player getPlayer() {
-        return player;
+        return context.player();
     }
 
     public LACPlayer getLacPlayer() {
-        return lacPlayer;
+        return context.owner();
     }
 
     public Block getBlock() {
@@ -66,5 +69,4 @@ public class LACAsyncPlayerPlaceBlockEvent extends Event {
     public static HandlerList getHandlerList() {
         return handlers;
     }
-
 }

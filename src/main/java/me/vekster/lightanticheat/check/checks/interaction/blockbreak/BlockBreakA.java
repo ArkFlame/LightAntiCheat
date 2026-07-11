@@ -6,13 +6,13 @@ import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
 import me.vekster.lightanticheat.event.playerbreakblock.LACAsyncPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.event.playerbreakblock.LACPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.player.cache.history.PlayerCacheHistory;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.AureliumSkillsHook;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.McMMOHook;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.VeinMinerHook;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -58,11 +58,15 @@ public class BlockBreakA extends InteractionCheck implements Listener {
         if (buffer.getInt("flags") <= 1)
             return;
 
-        Player player = event.getPlayer();
-        LACPlayer lacPlayer = event.getLacPlayer();
         Block block = event.getBlock();
 
-        Scheduler.runTaskLater(player, () -> {
+        LACPlayerManager.executeLater(event.getContext(), 1L, context -> {
+            if (block.getWorld() == null || !context.worldId().equals(block.getWorld().getUID()))
+                return;
+
+            Player player = context.player();
+            LACPlayer lacPlayer = context.owner();
+
             if (getYawChange(player.getEyeLocation(), lacPlayer) > 30.0)
                 return;
 
@@ -75,7 +79,7 @@ public class BlockBreakA extends InteractionCheck implements Listener {
                 return;
 
             callViolationEvent(player, lacPlayer, null);
-        }, 1);
+        });
     }
 
     private boolean flag(Player player, LACPlayer lacPlayer, Block block, Location eyeLocation, boolean async) {

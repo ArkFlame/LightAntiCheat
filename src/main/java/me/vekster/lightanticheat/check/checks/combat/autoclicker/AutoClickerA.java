@@ -4,7 +4,7 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
 import me.vekster.lightanticheat.player.LACPlayer;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,9 +25,9 @@ public class AutoClickerA extends CombatCheck implements Listener {
         if (event.getAction() == Action.PHYSICAL)
             return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            final LACPlayer lacPlayer = context.owner();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
 

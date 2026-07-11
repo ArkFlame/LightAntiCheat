@@ -4,11 +4,11 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.VerUtil;
 import me.vekster.lightanticheat.version.identifier.LACVersion;
 import me.vekster.lightanticheat.version.identifier.VerIdentifier;
@@ -32,7 +32,6 @@ import org.bukkit.util.Vector;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Anti-Knockback
@@ -62,11 +61,11 @@ public class VelocityA extends CombatCheck implements Listener {
         Player player = (Player) event.getEntity();
         if (isExternalNPC(player))
             return;
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        PlayerCache cache = lacPlayer.cache;
         Buffer buffer = getBuffer(player);
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            final LACPlayer lacPlayer = context.owner();
+            final PlayerCache cache = context.cache();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
             if (!isConditionAllowed(player, lacPlayer, cache))
@@ -95,14 +94,15 @@ public class VelocityA extends CombatCheck implements Listener {
         if (isPandaSpigot()) return;
         if (isExternalNPC(event)) return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        PlayerCache cache = lacPlayer.cache;
+        if (isExternalNPC(event)) return;
         Buffer buffer = getBuffer(player);
         if (!buffer.isExists("lastHit") || System.currentTimeMillis() - buffer.getLong("lastHit") > 300)
             return;
         buffer.put("lastHit", 0L);
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            final LACPlayer lacPlayer = context.owner();
+            final PlayerCache cache = context.cache();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
             if (!isConditionAllowed(player, lacPlayer, cache))
@@ -132,12 +132,10 @@ public class VelocityA extends CombatCheck implements Listener {
     }
 
     private void detect(Player player1, boolean finalCall) {
-        UUID uuid = player1.getUniqueId();
-        Scheduler.runTaskLater(player1, () -> {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player == null) return;
-            LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-            PlayerCache cache = lacPlayer.cache;
+        LACPlayerManager.executeLater(player1, 1, context -> {
+            final Player player = context.player();
+            final LACPlayer lacPlayer = context.owner();
+            final PlayerCache cache = context.cache();
             Buffer buffer = getBuffer(player);
 
             if (!buffer.isExists("lastVelocityChange") ||
@@ -180,7 +178,7 @@ public class VelocityA extends CombatCheck implements Listener {
                 return;
 
             callViolationEvent(player, lacPlayer, null);
-        }, 1);
+        });
     }
 
     private static boolean isConditionAllowed(Player player, LACPlayer lacPlayer, PlayerCache cache) {

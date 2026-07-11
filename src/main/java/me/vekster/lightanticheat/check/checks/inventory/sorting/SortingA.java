@@ -4,12 +4,12 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.inventory.InventoryCheck;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
 import me.vekster.lightanticheat.util.reflection.ReflectionException;
 import me.vekster.lightanticheat.util.reflection.ReflectionUtil;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -53,9 +53,9 @@ public class SortingA extends InventoryCheck implements Listener {
         if (isExternalNPC(player)) return;
         if (player.getGameMode() == GameMode.CREATIVE)
             return;
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            final LACPlayer lacPlayer = context.owner();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
 
@@ -126,7 +126,7 @@ public class SortingA extends InventoryCheck implements Listener {
             return;
         if (outdated)
             return;
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
             Location location = null;
             try {
                 Object object = ReflectionUtil.runDeclaredMethod(event.getInventory(), "getLocation");

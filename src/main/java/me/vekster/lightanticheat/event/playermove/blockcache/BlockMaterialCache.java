@@ -7,11 +7,83 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public final class BlockMaterialCache {
 
     private BlockMaterialCache() {
+    }
+
+    private static final Set<Material> WATER_MATERIALS;
+    private static volatile boolean waterloggedCapable;
+    private static final Class<?> WATERLOGGED_CLASS;
+    private static final java.lang.reflect.Method WATERLOGGED_METHOD;
+
+    static {
+        Set<Material> water = new HashSet<>();
+        Material w = Material.getMaterial("WATER");
+        Material sw = Material.getMaterial("STATIONARY_WATER");
+        Material bc = Material.getMaterial("BUBBLE_COLUMN");
+        if (w != null) water.add(w);
+        if (sw != null) water.add(sw);
+        if (bc != null) water.add(bc);
+        WATER_MATERIALS = Collections.unmodifiableSet(water);
+
+        Class<?> clazz = null;
+        java.lang.reflect.Method method = null;
+        try {
+            clazz = Class.forName("org.bukkit.block.data.Waterlogged");
+            method = clazz.getMethod("isWaterlogged");
+            waterloggedCapable = true;
+        } catch (ReflectiveOperationException e) {
+            waterloggedCapable = false;
+        }
+        WATERLOGGED_CLASS = clazz;
+        WATERLOGGED_METHOD = method;
+    }
+
+    static boolean isWaterMaterial(Material material) {
+        return material != null && WATER_MATERIALS.contains(material);
+    }
+
+    public static boolean isWaterLike(final Block block) {
+        if (block == null) {
+            return false;
+        }
+        final Material type = block.getType();
+        if (isWaterMaterial(type)) {
+            return true;
+        }
+        if (!waterloggedCapable) {
+            return false;
+        }
+        final World world = block.getWorld();
+        final int chunkX = block.getX() >> 4;
+        final int chunkZ = block.getZ() >> 4;
+        if (!isLoadedOwned(world, chunkX, chunkZ)) {
+            return false;
+        }
+        try {
+            final Object data = block.getBlockData();
+            if (WATERLOGGED_CLASS != null && WATERLOGGED_CLASS.isInstance(data)) {
+                return (Boolean) WATERLOGGED_METHOD.invoke(data);
+            }
+            return false;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            disableWaterlogged(e);
+            return false;
+        }
+    }
+
+    private static void disableWaterlogged(final Throwable t) {
+        if (waterloggedCapable) {
+            waterloggedCapable = false;
+            java.util.logging.Logger.getLogger(BlockMaterialCache.class.getName())
+                    .warning("Disabled Waterlogged capability due to: " + t);
+        }
     }
 
     public static Optional<Block> findBlockAt(final Location location) {

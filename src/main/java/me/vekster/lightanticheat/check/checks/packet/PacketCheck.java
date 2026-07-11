@@ -4,9 +4,7 @@ import me.vekster.lightanticheat.check.Check;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.player.LACPlayer;
-import me.vekster.lightanticheat.player.LACPlayerListener;
-import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,23 +50,14 @@ public abstract class PacketCheck extends Check {
 
     @Nullable
     public LACPlayer getLacPlayer(UUID uuid) {
-        LACPlayer lacPlayer = LACPlayerListener.getAsyncPlayers().getOrDefault(uuid, null);
-        if (lacPlayer == null || lacPlayer.leaveTime != 0L)
-            return null;
-        return lacPlayer;
+        return LACPlayerManager.find(uuid)
+                .filter(player -> player.leaveTime == 0L)
+                .orElse(null);
     }
 
     public void flag(Player player, LACPlayer lacPlayer) {
-        if (lacPlayer.leaveTime != 0L || !player.isOnline())
-            return;
-        Scheduler.runTask(true, () -> {
-            Scheduler.entityThread(player, () -> {
-                if (!FoliaUtil.isStable(player))
-                    return;
-                if (lacPlayer.leaveTime != 0L || !player.isOnline())
-                    return;
-                callViolationEvent(getCheckSetting(), player, lacPlayer, null);
-            });
+        LACPlayerManager.execute(player, true, context -> {
+            callViolationEvent(getCheckSetting(), context.player(), context.owner(), null);
         });
     }
 

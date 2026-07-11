@@ -5,11 +5,11 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.inventory.InventoryCheck;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -40,10 +40,10 @@ public class ItemSwapA extends InventoryCheck implements Listener {
             return;
         Player player = (Player) event.getWhoClicked();
         if (isExternalNPC(player)) return;
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        PlayerCache cache = lacPlayer.cache;
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            final LACPlayer lacPlayer = context.owner();
+            final PlayerCache cache = context.cache();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
 

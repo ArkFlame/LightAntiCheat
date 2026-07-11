@@ -2,8 +2,10 @@ package me.vekster.lightanticheat.version;
 
 import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
 import me.vekster.lightanticheat.util.cooldown.CooldownUtil;
+import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
 import me.vekster.lightanticheat.util.logger.LogType;
 import me.vekster.lightanticheat.util.logger.Logger;
 import me.vekster.lightanticheat.util.reflection.ReflectionException;
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VerPlayer {
@@ -29,7 +32,7 @@ public class VerPlayer {
     private static final Map<String, Boolean> CACHE = new HashMap<>();
     private static final Map<String, Boolean> ASYNC_CACHE = new ConcurrentHashMap<>();
     private static Class<?> craftPlayerClass;
-    private final Player PLAYER;
+    private volatile Player player;
 
     static {
         try {
@@ -40,7 +43,15 @@ public class VerPlayer {
     }
 
     public VerPlayer(Player player) {
-        this.PLAYER = player;
+        bindPlayer(player);
+    }
+
+    protected final void bindPlayer(Player player) {
+        this.player = Objects.requireNonNull(player, "player");
+    }
+
+    protected final Player boundPlayer() {
+        return Objects.requireNonNull(this.player, "player");
     }
 
     public static int getPingWithoutCache(Player player, boolean async) {
@@ -86,12 +97,14 @@ public class VerPlayer {
     }
 
     public int getPing() {
-        return CooldownUtil.getPing(LACPlayer.getLacPlayer(PLAYER).cooldown, PLAYER, false);
+        final Player player = boundPlayer();
+        return CooldownUtil.getPing(LACPlayer.getLacPlayer(player).cooldown, player, false);
     }
 
     @SecureAsync
     public int getPing(boolean async) {
-        return CooldownUtil.getPing(LACPlayer.getLacPlayer(PLAYER).cooldown, PLAYER, async);
+        final Player player = boundPlayer();
+        return CooldownUtil.getPing(LACPlayer.getLacPlayer(player).cooldown, player, async);
     }
 
     @SecureAsync
@@ -102,8 +115,9 @@ public class VerPlayer {
 
     @SecureAsync
     public boolean isGliding() {
-        return VerUtil.multiVersion.isGliding(PLAYER) ||
-                VerUtil.multiVersion.isGlidingToggled(PLAYER);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.isGliding(player) ||
+                VerUtil.multiVersion.isGlidingToggled(player);
     }
 
     @SecureAsync
@@ -113,7 +127,8 @@ public class VerPlayer {
 
     @SecureAsync
     public boolean isRiptiding() {
-        return VerUtil.multiVersion.isRiptiding(PLAYER);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.isRiptiding(player);
     }
 
     @SecureAsync
@@ -123,27 +138,30 @@ public class VerPlayer {
 
     @SecureAsync
     public boolean isSwimming() {
-        return VerUtil.multiVersion.isSwimming(PLAYER);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.isSwimming(player);
     }
 
     @SecureAsync
     public static boolean isClimbing(Player player) {
-        return VerUtil.multiVersion.isClimbing(player);
+        if (!FoliaUtil.isFolia()) return VerUtil.multiVersion.isClimbing(player);
+        return LACPlayerManager.current(player).map(ctx -> ctx.cache().playerClimbing).orElse(false);
     }
 
     @SecureAsync
     public boolean isClimbing() {
-        return VerUtil.multiVersion.isClimbing(PLAYER);
+        return VerPlayer.isClimbing(boundPlayer());
     }
 
     @SecureAsync
     public static boolean isInWater(Player player) {
-        return VerUtil.multiVersion.isInWater(player);
+        if (!FoliaUtil.isFolia()) return VerUtil.multiVersion.isInWater(player);
+        return LACPlayerManager.current(player).map(ctx -> ctx.cache().playerInWater).orElse(false);
     }
 
     @SecureAsync
     public boolean isInWater() {
-        return VerUtil.multiVersion.isInWater(PLAYER);
+        return VerPlayer.isInWater(boundPlayer());
     }
 
     @SecureAsync
@@ -153,7 +171,8 @@ public class VerPlayer {
 
     @SecureAsync
     public ItemStack getItemInMainHand() {
-        return VerUtil.multiVersion.getItemInMainHand(PLAYER);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.getItemInMainHand(player);
     }
 
     @SecureAsync
@@ -163,7 +182,8 @@ public class VerPlayer {
 
     @SecureAsync
     public ItemStack getItemInOffHand() {
-        return VerUtil.multiVersion.getItemInOffHand(PLAYER);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.getItemInOffHand(player);
     }
 
     @SecureAsync
@@ -175,7 +195,8 @@ public class VerPlayer {
     @SecureAsync
     @Nullable
     public Block getTargetBlockExact(int distance) {
-        return VerUtil.multiVersion.getTargetBlockExact(PLAYER, distance);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.getTargetBlockExact(player, distance);
     }
 
     @SecureAsync
@@ -185,7 +206,8 @@ public class VerPlayer {
 
     @SecureAsync
     public void sendBlockDate(Location location, Block block) {
-        VerUtil.multiVersion.sendBlockData(PLAYER, location, block);
+        final Player player = boundPlayer();
+        VerUtil.multiVersion.sendBlockData(player, location, block);
     }
 
     @SecureAsync
@@ -195,12 +217,14 @@ public class VerPlayer {
 
     @SecureAsync
     public boolean sendHoverMessage(List<String> lines, boolean hexColor) {
-        return VerUtil.multiVersion.sendHoverMessage(PLAYER, lines, hexColor);
+        final Player player = boundPlayer();
+        return VerUtil.multiVersion.sendHoverMessage(player, lines, hexColor);
     }
 
     @NotNull
     public ItemStack getArmorPiece(EquipmentSlot equipmentSlot) {
-        return VerUtil.getArmorPiece(PLAYER.getInventory(), equipmentSlot);
+        final Player player = boundPlayer();
+        return VerUtil.getArmorPiece(player.getInventory(), equipmentSlot);
     }
 
 }

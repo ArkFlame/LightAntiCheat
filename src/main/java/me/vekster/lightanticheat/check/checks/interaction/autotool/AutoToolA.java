@@ -4,7 +4,7 @@ import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
 import me.vekster.lightanticheat.player.LACPlayer;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -38,13 +38,13 @@ public class AutoToolA extends InteractionCheck implements Listener {
             return;
 
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         Block clickedBlock = event.getClickedBlock();
         Material clickedType = clickedBlock.getType();
         int clickedSlot = player.getInventory().getHeldItemSlot();
         Material heldType = getItemType(player.getInventory().getItem(clickedSlot));
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            LACPlayer lacPlayer = context.owner();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
             if (!isSurvivalLike(player.getGameMode()))
@@ -63,9 +63,9 @@ public class AutoToolA extends InteractionCheck implements Listener {
         if (isExternalNPC(event)) return;
 
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
 
-        Scheduler.entityThread(player, () -> {
+        LACPlayerManager.execute(player, false, context -> {
+            LACPlayer lacPlayer = context.owner();
             if (!isCheckAllowed(player, lacPlayer))
                 return;
             if (!isSurvivalLike(player.getGameMode()))

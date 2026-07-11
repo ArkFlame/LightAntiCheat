@@ -6,13 +6,13 @@ import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.player.cache.history.PlayerCacheHistory;
 import me.vekster.lightanticheat.util.cooldown.CooldownUtil;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.util.precise.AccuracyUtil;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -127,7 +127,10 @@ public class KillAuraB extends CombatCheck implements Listener {
         Entity finalEntity = entity;
         double finalExtraOffset = extraOffset;
         double finalMaxAngle = maxAngle;
-        Scheduler.runTaskLater(player, () -> {
+        LACPlayerManager.executeLater(event.getContext(), 1L, context -> {
+            if (finalEntity == null || !finalEntity.isValid() || finalEntity.getWorld() == null || !context.worldId().equals(finalEntity.getWorld().getUID()))
+                return;
+
             if (distanceToHitbox(player, finalEntity) != -1)
                 return;
 
@@ -150,7 +153,7 @@ public class KillAuraB extends CombatCheck implements Listener {
                 return;
 
             callViolationEventIfRepeat(player, lacPlayer, null, buffer, Main.getBufferDurationMils() - 1000L);
-        }, 1);
+        });
     }
 
     private static double getYawChange(Location eyeLocation, LACPlayer lacPlayer) {

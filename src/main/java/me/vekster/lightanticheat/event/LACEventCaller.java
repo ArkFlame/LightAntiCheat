@@ -3,10 +3,13 @@ package me.vekster.lightanticheat.event;
 import com.fren_gor.lightInjector.LightInjector;
 import io.netty.channel.Channel;
 import me.vekster.lightanticheat.Main;
+import java.util.Optional;
 import me.vekster.lightanticheat.event.bus.LACEventBus;
 import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.event.packetrecive.packettype.PacketRecognitionResult;
 import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
+import me.vekster.lightanticheat.event.packetrecive.packettype.PacketTypeRecognizer;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.event.playerattack.LACPlayerAttackEvent;
 import me.vekster.lightanticheat.event.playerbreakblock.LACAsyncPlayerBreakBlockEvent;
@@ -16,13 +19,12 @@ import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playerplaceblock.LACAsyncPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
-import me.vekster.lightanticheat.player.LACPlayerListener;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.util.config.ConfigManager;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
-import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.identifier.LACVersion;
 import me.vekster.lightanticheat.version.identifier.VerIdentifier;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -44,14 +46,25 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (event.getTo() == null)
             return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+        Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
+        if (ctxOpt.isEmpty())
             return;
-        LACPlayerMoveEvent lacPlayerMoveEvent = new LACPlayerMoveEvent(event, player, lacPlayer, event.getFrom(), event.getTo());
-        if (!FoliaUtil.isStable(player))
+        LACPlayer.Context context = ctxOpt.get();
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
             return;
-        LACEventBus.call(LACEventType.PLAYER_MOVE, lacPlayerMoveEvent);
-        LACEventBus.call(LACEventType.ASYNC_PLAYER_MOVE, new LACAsyncPlayerMoveEvent(lacPlayerMoveEvent));
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (from == null || to == null || from.getWorld() == null || to.getWorld() == null)
+            return;
+        if (!from.getWorld().getUID().equals(context.worldId()))
+            return;
+        if (!to.getWorld().getUID().equals(context.worldId()))
+            return;
+        LACPlayerMoveEvent sync = new LACPlayerMoveEvent(event, context, from, to);
+        LACEventBus.call(LACEventType.PLAYER_MOVE, sync);
+        if (!context.isCurrent())
+            return;
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_MOVE, new LACAsyncPlayerMoveEvent(sync));
     }
 
     public static void callEntityDamageEvent(EntityDamageByEntityEvent event) {
@@ -62,62 +75,66 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         if (CheckUtil.isExternalNPC(event.getEntity()))
             return;
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+        Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
+        if (ctxOpt.isEmpty())
             return;
-        if (!FoliaUtil.isStable(player))
+        LACPlayer.Context context = ctxOpt.get();
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
             return;
-        LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, player, lacPlayer, event.getEntity()));
-        LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(player, lacPlayer, event.getEntity().getEntityId()));
+        if (event.getEntity().getWorld() == null || !event.getEntity().getWorld().getUID().equals(context.worldId()))
+            return;
+        LACEventBus.call(LACEventType.PLAYER_ATTACK, new LACPlayerAttackEvent(event, context, event.getEntity()));
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK, new LACAsyncPlayerAttackEvent(context, event.getEntity().getEntityId()));
     }
 
     public static void callBlockPlaceEvents(BlockPlaceEvent event) {
         if (CheckUtil.isExternalNPC(event.getPlayer()))
             return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+        Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
+        if (ctxOpt.isEmpty())
             return;
-        LACPlayerPlaceBlockEvent lacPlayerPlaceBlockEvent = new LACPlayerPlaceBlockEvent(event, player, lacPlayer,
-                event.getBlock(), event.getBlockAgainst(), event.getBlockReplacedState());
-        if (!FoliaUtil.isStable(player))
+        LACPlayer.Context context = ctxOpt.get();
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
             return;
-        LACEventBus.call(LACEventType.PLAYER_PLACE_BLOCK, lacPlayerPlaceBlockEvent);
-        LACEventBus.call(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, new LACAsyncPlayerPlaceBlockEvent(lacPlayerPlaceBlockEvent));
+        if (event.getBlock().getWorld() == null || !event.getBlock().getWorld().getUID().equals(context.worldId()))
+            return;
+        LACPlayerPlaceBlockEvent sync = new LACPlayerPlaceBlockEvent(event, context, event.getBlock(), event.getBlockAgainst(), event.getBlockReplacedState());
+        LACEventBus.call(LACEventType.PLAYER_PLACE_BLOCK, sync);
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, new LACAsyncPlayerPlaceBlockEvent(sync));
     }
 
     public static void callBlockBreakEvents(BlockBreakEvent event) {
         if (CheckUtil.isExternalNPC(event.getPlayer()))
             return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(player, lacPlayer, false))
+        Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
+        if (ctxOpt.isEmpty())
             return;
-        LACPlayerBreakBlockEvent lacPlayerBreakBlockEvent = new LACPlayerBreakBlockEvent(event, player, lacPlayer, event.getBlock());
-        if (!FoliaUtil.isStable(player))
+        LACPlayer.Context context = ctxOpt.get();
+        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
             return;
-        LACEventBus.call(LACEventType.PLAYER_BREAK_BLOCK, lacPlayerBreakBlockEvent);
-        LACEventBus.call(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, new LACAsyncPlayerBreakBlockEvent(lacPlayerBreakBlockEvent));
+        if (event.getBlock().getWorld() == null || !event.getBlock().getWorld().getUID().equals(context.worldId()))
+            return;
+        LACPlayerBreakBlockEvent sync = new LACPlayerBreakBlockEvent(event, context, event.getBlock());
+        LACEventBus.call(LACEventType.PLAYER_BREAK_BLOCK, sync);
+        LACEventBus.call(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, new LACAsyncPlayerBreakBlockEvent(sync));
     }
 
     @Override
     protected @Nullable Object onPacketReceiveAsync(@Nullable Player sender, @NotNull Channel channel, @NotNull Object nmsPacket) {
         if (!ConfigManager.Config.enabled) return nmsPacket;
         if (sender == null) return nmsPacket;
-        LACPlayer lacPlayer = LACPlayerListener.getAsyncPlayers().getOrDefault(sender.getUniqueId(), null);
-        if (lacPlayer == null || lacPlayer.leaveTime != 0L || !sender.isOnline())
-            return nmsPacket;
-        if (CheckUtil.shouldSkipJavaWhenBedrockOnly(sender, lacPlayer, true))
-            return nmsPacket;
-        LACAsyncPacketReceiveEvent event = new LACAsyncPacketReceiveEvent(sender, lacPlayer, nmsPacket);
-        Scheduler.entityThread(sender, true, () -> {
-            if (!FoliaUtil.isStable(sender))
-                return;
-            if (event.getPacketType() == PacketType.USE_ENTITY && VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
+        final PacketRecognitionResult recognition = PacketTypeRecognizer.recognize(nmsPacket);
+        LACPlayerManager.execute(sender, true, context -> {
+            if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), true)) return;
+            final LACAsyncPacketReceiveEvent packetEvent = new LACAsyncPacketReceiveEvent(context, recognition);
+            if (packetEvent.getPacketType() == PacketType.USE_ENTITY
+                    && VerIdentifier.getVersion().isNewerThan(LACVersion.V1_8)) {
                 LACEventBus.call(LACEventType.ASYNC_PLAYER_ATTACK,
-                        new LACAsyncPlayerAttackEvent(event.getPlayer(), event.getLacPlayer(), event.getEntityId()));
+                        new LACAsyncPlayerAttackEvent(context, packetEvent.getEntityId()));
             }
-            LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, event);
+            LACEventBus.call(LACEventType.ASYNC_PACKET_RECEIVE, packetEvent);
         });
         return nmsPacket;
     }

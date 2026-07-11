@@ -1,6 +1,7 @@
 package me.vekster.lightanticheat.event.bus;
 
 import me.vekster.lightanticheat.Main;
+import me.vekster.lightanticheat.event.context.LACPlayerContextEvent;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.LACMovementChange;
 import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
@@ -66,6 +67,11 @@ public final class LACEventBus {
         MOVEMENT_SNAPSHOTS = new LACEventSubscription[typeCount][4][];
     }
 
+    private static boolean canDispatch(Object event) {
+        if (!(event instanceof LACPlayerContextEvent)) return true;
+        return ((LACPlayerContextEvent) event).canDispatch();
+    }
+
     private static int movementMask(final Object event) {
         if (event instanceof LACAsyncPlayerMoveEvent) {
             return movementMask(((LACAsyncPlayerMoveEvent) event).getMovementChange());
@@ -94,6 +100,8 @@ public final class LACEventBus {
         Objects.requireNonNull(type, "type must not be null");
         Objects.requireNonNull(event, "event must not be null");
 
+        if (!canDispatch(event)) return;
+
         final int movementMask = movementMask(event);
         final LACEventSubscription[] subscriptions;
         if (movementMask >= 0) {
@@ -105,6 +113,7 @@ public final class LACEventBus {
         if (subscriptions == null || subscriptions.length == 0) return;
 
         for (LACEventSubscription subscription : subscriptions) {
+            if (!canDispatch(event)) return;
             try {
                 subscription.call(event);
             } catch (Exception e) {

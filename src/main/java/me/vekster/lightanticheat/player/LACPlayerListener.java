@@ -8,6 +8,7 @@ import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockCache;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
+import me.vekster.lightanticheat.player.LACPlayerManager;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cache.entity.CachedEntity;
 import me.vekster.lightanticheat.player.cache.history.HistoryElement;
@@ -51,7 +52,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LACPlayerListener implements Listener {
 
     private static final Set<LACPlayer> LEFT_PLAYERS = new HashSet<>();
-    private static final Map<UUID, LACPlayer> asyncPlayers = new ConcurrentHashMap<>();
 
     public static void loadLACPlayerListener() {
         loadLacPlayersOnReload();
@@ -67,21 +67,9 @@ public class LACPlayerListener implements Listener {
     }
 
     private static void loadLacPlayer(Player player) {
-        UUID uuid = player.getUniqueId();
-
-        if (!LACPlayer.PLAYERS.containsKey(uuid)) {
-            LACPlayer.createLacPlayer(player);
-            asyncPlayers.put(uuid, LACPlayer.getLacPlayer(uuid));
-            return;
-        }
-
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(uuid);
-        lacPlayer.joinTime = System.currentTimeMillis();
-        lacPlayer.leaveTime = 0;
-        lacPlayer.cache = new PlayerCache(player);
+        LACPlayer lacPlayer = LACPlayerManager.attach(player);
         lacPlayer.cooldown = new PlayerCooldown();
         CooldownUtil.isBedrockPlayer(lacPlayer.cooldown, player);
-        asyncPlayers.put(uuid, lacPlayer);
     }
 
     private static void loadLacPlayersOnReload() {
@@ -95,18 +83,16 @@ public class LACPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuit(PlayerQuitEvent event) {
         Scheduler.entityThread(event.getPlayer(), true, () -> {
-            LACPlayer lacPlayer = LACPlayer.getLacPlayer(event.getPlayer());
+            LACPlayer lacPlayer = LACPlayerManager.find(event.getPlayer()).orElse(null);
             if (lacPlayer == null) return;
-            lacPlayer.leaveTime = System.currentTimeMillis();
-            lacPlayer.cache = new PlayerCache(event.getPlayer());
+            LACPlayerManager.detach(event.getPlayer());
             LEFT_PLAYERS.add(lacPlayer);
-            getAsyncPlayers().remove(event.getPlayer().getUniqueId());
         });
     }
 
     private static void loadLacPlayerCleaner() {
         Scheduler.runTaskTimer(() -> {
-                    for (LACPlayer lacPlayer : LACPlayer.PLAYERS.values())
+                    for (LACPlayer lacPlayer : LACPlayerManager.values())
                         lacPlayer.violations = new PlayerViolations();
                 }, 20L * ConfigManager.Config.Violation.Reset.resetInterval,
                 20L * ConfigManager.Config.Violation.Reset.resetInterval);
@@ -120,7 +106,7 @@ public class LACPlayerListener implements Listener {
                 if (acPlayer.leaveTime == 0)
                     return true;
                 if (currentTime - acPlayer.leaveTime >= wait) {
-                    LACPlayer.removeLacPlayer(acPlayer.uuid);
+                    LACPlayerManager.remove(acPlayer.uuid);
                     return true;
                 }
                 return false;
@@ -130,26 +116,24 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void eventHistory(LACAsyncPlayerMoveEvent event) {
-        Player player = event.getPlayer();
-        LACPlayer lacPlayer = event.getLacPlayer();
-        lacPlayer.cache.history.onEvent.location.add(event.getFrom());
-        Set<Block> downBlocks = CheckUtil.getDownBlocks(player, 0.15);
-        lacPlayer.cache.history.onEvent.onGround
-                .add(new PlayerCache.OnGround(CheckUtil.isOnGround(player, downBlocks, lacPlayer.cache, LeanTowards.FALSE),
-                        CheckUtil.isOnGround(player, downBlocks, lacPlayer.cache, LeanTowards.TRUE)));
+        PlayerCache cache = event.getContext().cache();
+        cache.history.onEvent.location.add(event.getFrom());
+        Set<Block> downBlocks = event.getFromDownBlocks();
+        cache.history.onEvent.onGround
+                .add(new PlayerCache.OnGround(CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.FALSE),
+                        CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.TRUE)));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void packetHistory(LACAsyncPacketReceiveEvent event) {
         if (event.getPacketType() != PacketType.FLYING)
             return;
-        Player player = event.getPlayer();
-        LACPlayer lacPlayer = event.getLacPlayer();
-        lacPlayer.cache.history.onPacket.location.add(event.getPlayer().getLocation());
-        Set<Block> downBlocks = CheckUtil.getDownBlocks(player, 0.15);
-        lacPlayer.cache.history.onPacket.onGround
-                .add(new PlayerCache.OnGround(CheckUtil.isOnGround(player, downBlocks, lacPlayer.cache, LeanTowards.FALSE),
-                        CheckUtil.isOnGround(player, downBlocks, lacPlayer.cache, LeanTowards.TRUE)));
+        PlayerCache cache = event.getContext().cache();
+        event.getLocation().ifPresent(loc -> cache.history.onPacket.location.add(loc));
+        Set<Block> downBlocks = event.getDownBlocks();
+        cache.history.onPacket.onGround
+                .add(new PlayerCache.OnGround(CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.FALSE),
+                        CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.TRUE)));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -157,13 +141,13 @@ public class LACPlayerListener implements Listener {
         Map<PotionEffectType, PotionEffect> potionEffects = new ConcurrentHashMap<>();
         for (PotionEffect potionEffect : event.getPlayer().getActivePotionEffects())
             potionEffects.put(potionEffect.getType(), potionEffect);
-        event.getLacPlayer().cache.potionEffects = potionEffects;
+        event.getContext().cache().potionEffects = potionEffects;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void entitiesAsync(LACAsyncPlayerMoveEvent event) {
-        PlayerCache cache = event.getLacPlayer().cache;
-        PlayerCooldown cooldown = event.getLacPlayer().cooldown;
+        PlayerCache cache = event.getContext().cache();
+        PlayerCooldown cooldown = event.getContext().owner().cooldown;
 
         Set<CachedEntity> entitiesNearby = CooldownUtil.getNearbyEntitiesAsync(cooldown, event.getPlayer(), EntityDistance.NEARBY);
         cache.entitiesNearby = entitiesNearby;
@@ -195,18 +179,18 @@ public class LACPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastGlidingRiptidingFlight(LACPlayerMoveEvent event) {
         if (event.isPlayerGliding())
-            event.getLacPlayer().cache.lastGliding = System.currentTimeMillis();
+            event.getContext().cache().lastGliding = System.currentTimeMillis();
         if (event.isPlayerRiptiding())
-            event.getLacPlayer().cache.lastRiptiding = System.currentTimeMillis();
+            event.getContext().cache().lastRiptiding = System.currentTimeMillis();
         if (event.isPlayerFlying())
-            event.getLacPlayer().cache.lastFlight = System.currentTimeMillis();
+            event.getContext().cache().lastFlight = System.currentTimeMillis();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastInsideVehicle(LACPlayerMoveEvent event) {
         if (!event.isPlayerInsideVehicle())
             return;
-        event.getLacPlayer().cache.lastInsideVehicle = System.currentTimeMillis();
+        event.getContext().cache().lastInsideVehicle = System.currentTimeMillis();
     }
 
     @EventHandler
@@ -283,10 +267,10 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void lastVelocityChangeNotGround(LACAsyncPlayerMoveEvent event) {
-        if (event.getLacPlayer().cache.history.onEvent.onGround.get(HistoryElement.FROM).towardsTrue ||
-                event.getLacPlayer().cache.history.onPacket.onGround.get(HistoryElement.FROM).towardsTrue) {
-            event.getLacPlayer().cache.lastAirKbVelocity = 0;
-            event.getLacPlayer().cache.lastStrongAirKbVelocity = 0;
+        if (event.getContext().cache().history.onEvent.onGround.get(HistoryElement.FROM).towardsTrue ||
+                event.getContext().cache().history.onPacket.onGround.get(HistoryElement.FROM).towardsTrue) {
+            event.getContext().cache().lastAirKbVelocity = 0;
+            event.getContext().cache().lastStrongAirKbVelocity = 0;
         }
     }
 
@@ -360,18 +344,18 @@ public class LACPlayerListener implements Listener {
     public void lastTeleport(PlayerTeleportEvent event) {
         if (CheckUtil.isExternalNPC(event)) return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        lacPlayer.cache.lastTeleport = System.currentTimeMillis();
-        lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        LACPlayerManager.find(player).ifPresent(lacPlayer -> {
+            lacPlayer.cache.lastTeleport = System.currentTimeMillis();
+            lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        });
+        LACPlayerManager.beginTransition(player);
+        Scheduler.runTaskLater(player, () -> LACPlayerManager.completeTransition(player), 1L);
     }
 
     @EventHandler
     public void lastWorldChange(PlayerChangedWorldEvent event) {
         if (CheckUtil.isExternalNPC(event)) return;
-        Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        lacPlayer.cache.lastWorldChange = System.currentTimeMillis();
-        lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        LACPlayerManager.completeTransition(event.getPlayer());
     }
 
     @EventHandler
@@ -386,9 +370,12 @@ public class LACPlayerListener implements Listener {
     public void lastRespawn(PlayerRespawnEvent event) {
         if (CheckUtil.isExternalNPC(event)) return;
         Player player = event.getPlayer();
-        LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
-        lacPlayer.cache.lastRespawn = System.currentTimeMillis();
-        lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        LACPlayerManager.find(player).ifPresent(lacPlayer -> {
+            lacPlayer.cache.lastRespawn = System.currentTimeMillis();
+            lacPlayer.cache.fromBlockCache = BlockCache.empty();
+        });
+        LACPlayerManager.beginTransition(player);
+        Scheduler.runTaskLater(player, () -> LACPlayerManager.completeTransition(player), 1L);
     }
 
     @EventHandler
@@ -512,7 +499,7 @@ public class LACPlayerListener implements Listener {
         Vector vector = getVector(event.getFrom(), event.getTo());
 
         Material honeyBlockType = VerUtil.material.get("HONEY_BLOCK");
-        PlayerCache cache = event.getLacPlayer().cache;
+        PlayerCache cache = event.getContext().cache();
         for (Block block : event.getToDownBlocks()) {
             markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.typeOrAir(block), honeyBlockType);
             markVerticalSlimeHoney(cache, currentTime, vector, BlockMaterialCache.relativeTypeOrAir(block, BlockFace.DOWN), honeyBlockType);
@@ -603,7 +590,7 @@ public class LACPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void stopLongBypassAfterRedirection(LACAsyncPlayerMoveEvent event) {
         long currentTime = System.currentTimeMillis();
-        PlayerCache cache = event.getLacPlayer().cache;
+        PlayerCache cache = event.getContext().cache();
         Vector vector = getVector(event.getFrom(), event.getTo());
 
         if (currentTime - cache.lastBlockExplosion < 100 && cache.vectorOnBlockExplosion == null)
@@ -729,9 +716,9 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastBlockExplosion(LACAsyncPlayerMoveEvent event) {
-        for (CachedEntity cachedEntity : event.getLacPlayer().cache.entitiesNearby)
+        for (CachedEntity cachedEntity : event.getContext().cache().entitiesNearby)
             if (VerUtil.isPrimedTnt(cachedEntity.entityType)) {
-                LACPlayer lacPlayer = event.getLacPlayer();
+                LACPlayer lacPlayer = event.getContext().owner();
                 lacPlayer.cache.lastBlockExplosion = System.currentTimeMillis();
                 lacPlayer.cache.vectorOnBlockExplosion = null;
                 return;
@@ -740,29 +727,23 @@ public class LACPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void lastInWater(LACAsyncPlayerMoveEvent event) {
-        if (!VerPlayer.isInWater(event.getPlayer()))
+        if (!event.isPlayerInWater())
             return;
-        event.getLacPlayer().cache.lastInWater = System.currentTimeMillis();
+        event.getContext().cache().lastInWater = System.currentTimeMillis();
     }
 
     private static void loadSchedulerCacheUpdated() {
         Scheduler.runTaskTimer(() -> {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                LACPlayer lacPlayer = asyncPlayers.get(player.getUniqueId());
-                if (lacPlayer == null || lacPlayer.leaveTime != 0L) {
-                    continue;
-                }
-                PlayerCache cache = lacPlayer.cache;
-                Scheduler.entityThread(player, () -> {
-                    if (!player.isOnline()) {
-                        return;
-                    }
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                LACPlayerManager.queueStateRefresh(onlinePlayer, context -> {
+                    final PlayerCache cache = context.cache();
+                    final Player player = context.player();
                     cache.sneakingTicks = increase(player.isSneaking(), cache.sneakingTicks);
                     cache.sprintingTicks = increase(player.isSprinting(), cache.sprintingTicks);
-                    cache.swimmingTicks = increase(lacPlayer.isSwimming(), cache.swimmingTicks);
-                    cache.climbingTicks = increase(lacPlayer.isClimbing(), cache.climbingTicks);
-                    cache.glidingTicks = increase(lacPlayer.isGliding(), cache.glidingTicks);
-                    cache.riptidingTicks = increase(lacPlayer.isRiptiding(), cache.riptidingTicks);
+                    cache.swimmingTicks = increase(context.owner().isSwimming(), cache.swimmingTicks);
+                    cache.climbingTicks = increase(cache.playerClimbing, cache.climbingTicks);
+                    cache.glidingTicks = increase(context.owner().isGliding(), cache.glidingTicks);
+                    cache.riptidingTicks = increase(context.owner().isRiptiding(), cache.riptidingTicks);
                     cache.flyingTicks = increase(player.isFlying(), cache.flyingTicks);
                     cache.blockingTicks = increase(player.isBlocking(), cache.blockingTicks);
                     if (player.isInsideVehicle()) {
@@ -779,10 +760,6 @@ public class LACPlayerListener implements Listener {
         if (Math.abs(oldValue) >= 20 * 60 * 60)
             return oldValue;
         return value ? oldValue + 1 : oldValue - 1;
-    }
-
-    public static Map<UUID, LACPlayer> getAsyncPlayers() {
-        return asyncPlayers;
     }
 
 }

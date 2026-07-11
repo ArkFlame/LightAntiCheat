@@ -4,23 +4,29 @@ import me.vekster.lightanticheat.event.playermove.blockcache.BlockCache;
 import me.vekster.lightanticheat.player.cache.entity.CachedEntity;
 import me.vekster.lightanticheat.player.cache.history.PlayerCacheHistory;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 public class PlayerCache {
 
-    public PlayerCache(Player player) {
+    public PlayerCache(Location initialLocation, boolean alerts) {
+        Objects.requireNonNull(initialLocation, "initialLocation");
+        Objects.requireNonNull(initialLocation.getWorld(), "initialLocation.world");
         long currentTime = System.currentTimeMillis();
         lastTeleport = currentTime;
         lastRespawn = currentTime;
         lastWorldChange = currentTime;
-        history = new History(player);
-        fromBlockCache = new BlockCache(player, player.getLocation());
+        Location location = initialLocation.clone();
+        history = new History(location);
+        fromBlockCache = BlockCache.empty();
+        playerClimbing = false;
+        playerInWater = false;
+        this.alerts = alerts;
     }
 
     public long lastWasDamaged;
@@ -76,6 +82,9 @@ public class PlayerCache {
     public long lastInsideVehicle;
     public long lastInWater;
 
+    public volatile boolean playerClimbing;
+    public volatile boolean playerInWater;
+
     public int sneakingTicks;
     public int sprintingTicks;
     public int swimmingTicks;
@@ -98,10 +107,11 @@ public class PlayerCache {
     public boolean alerts = true;
 
     public static class History {
-        public History(Player player) {
-            onEvent.location = new PlayerCacheHistory<>(player.getLocation());
+        public History(Location initialLocation) {
+            Location location = initialLocation.clone();
+            onEvent.location = new PlayerCacheHistory<>(location);
             onEvent.onGround = new PlayerCacheHistory<>(new OnGround(true, false));
-            onPacket.location = new PlayerCacheHistory<>(player.getLocation());
+            onPacket.location = new PlayerCacheHistory<>(location);
             onPacket.onGround = new PlayerCacheHistory<>(new OnGround(true, false));
         }
 
