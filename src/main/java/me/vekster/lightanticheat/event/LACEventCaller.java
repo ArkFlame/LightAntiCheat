@@ -47,7 +47,7 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
-        if (ctxOpt.isEmpty())
+        if (!ctxOpt.isPresent())
             return;
         LACPlayer.Context context = ctxOpt.get();
         if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
@@ -76,7 +76,7 @@ public class LACEventCaller extends LightInjector implements Listener {
         if (CheckUtil.isExternalNPC(event.getEntity()))
             return;
         Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
-        if (ctxOpt.isEmpty())
+        if (!ctxOpt.isPresent())
             return;
         LACPlayer.Context context = ctxOpt.get();
         if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
@@ -92,7 +92,7 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
-        if (ctxOpt.isEmpty())
+        if (!ctxOpt.isPresent())
             return;
         LACPlayer.Context context = ctxOpt.get();
         if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))
@@ -109,7 +109,7 @@ public class LACEventCaller extends LightInjector implements Listener {
             return;
         Player player = event.getPlayer();
         Optional<LACPlayer.Context> ctxOpt = LACPlayerManager.current(player);
-        if (ctxOpt.isEmpty())
+        if (!ctxOpt.isPresent())
             return;
         LACPlayer.Context context = ctxOpt.get();
         if (CheckUtil.shouldSkipJavaWhenBedrockOnly(context.player(), context.owner(), false))

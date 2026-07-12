@@ -10,6 +10,7 @@ import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.detection.LeanTowards;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
+import me.vekster.lightanticheat.util.physics.VanillaVerticalPhysics;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,10 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BoatFly (the vertical speed should decrease)
@@ -33,8 +31,6 @@ public class BoatA extends MovementCheck implements Listener {
     public BoatA() {
         super(CheckName.BOAT_A);
     }
-
-    private static final Map<Integer, Double> SPEEDS = new ConcurrentHashMap<>();
 
     @Override
     public boolean isConditionAllowed(Player player, LACPlayer lacPlayer, PlayerCache cache, boolean isClimbing, boolean isInWater,
@@ -165,7 +161,7 @@ public class BoatA extends MovementCheck implements Listener {
         int boatFlightEvents = buffer.getInt("boatFlightEvents");
         if (FloodgateHook.isBedrockPlayer(player)) boatFlightEvents -= 2;
         if (boatFlightEvents < 4) return;
-        double calculatedVerticalSpeed = SPEEDS.getOrDefault(boatFlightEvents, Collections.min(SPEEDS.values()));
+        double calculatedVerticalSpeed = VanillaVerticalPhysics.boatVerticalSpeed(boatFlightEvents);
 
         if (verticalSpeed > calculatedVerticalSpeed * (calculatedVerticalSpeed > 0 ? 1.4 : 0.7) + 0.1)
             buffer.put("flags", Math.min(buffer.getInt("flags") + 1, 4));
@@ -278,26 +274,6 @@ public class BoatA extends MovementCheck implements Listener {
             return;
 
         callViolationEventIfRepeat(player, lacPlayer, event.getEvent(), buffer, 2000);
-    }
-
-    static {
-        SPEEDS.put(4, -0.19999999552965164);
-        SPEEDS.put(5, -0.23999999463558197);
-        SPEEDS.put(6, -0.2799999937415123);
-        SPEEDS.put(7, -0.3199999928474426);
-        SPEEDS.put(8, -0.35999999195337296);
-        SPEEDS.put(9, -0.3999999910593033);
-        SPEEDS.put(10, -0.4399999901652336);
-        SPEEDS.put(11, -0.47999998927116394);
-        SPEEDS.put(12, -0.5199999883770943);
-        SPEEDS.put(13, -0.5599999874830246);
-        SPEEDS.put(14, -0.5999999865889549);
-        SPEEDS.put(15, -0.6399999856948853);
-        SPEEDS.put(16, -0.6799999848008156);
-        SPEEDS.put(17, -0.7199999839067459);
-        SPEEDS.put(18, -0.7599999830126762);
-        SPEEDS.put(19, -0.7999999821186066);
-        SPEEDS.put(20, -0.8399999812245369);
     }
 
     private static boolean isIce(Set<Block> blocks) {

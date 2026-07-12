@@ -50,11 +50,11 @@ Specific bypass permissions can be enabled in the config
 * lightanticheat.* - all the above
 
 ## Building
-This fork is built with Maven, targets Java 17, and can be built with JDK 21:
+The project is compiled as Java 8 bytecode for Minecraft 1.8 compatibility. Use JDK 17 or newer for the Maven build because the compile-time Spigot API is modern.
 ```bash
 mvn clean package
 ```
-The shaded plugin jar is written to `target/LightAntiCheat-Plus-2.0.0.jar`.
+The shaded plugin jar is written to `target/LightAntiCheat-Plus-2.0.1.jar`.
 
 ## Maven Dependency
 You can add LightAntiCheat-Plus as a Maven dependency:
@@ -62,7 +62,7 @@ You can add LightAntiCheat-Plus as a Maven dependency:
 <dependency>
     <groupId>com.arkflame</groupId>
     <artifactId>LightAntiCheat-Plus</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <scope>provided</scope>
 </dependency>
 ```

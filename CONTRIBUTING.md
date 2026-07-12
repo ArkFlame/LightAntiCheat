@@ -6,7 +6,9 @@ LightAntiCheat is happy that you want to contribute to the project! We are alway
 
 ## Requirements
 To get started PRing changes you will need to have the following installed/condition met:
-- Java 8 JDK or later (21 is recommented because your changes have to work on EVERY version)
+- JDK 17 or newer to build
+- Java 8 source/API/bytecode compatibility required
+- runtime tests include 1.8 and a current release
 - Git (obviously)
 - Hardware capable of running a Minecraft server with Paper, Spigot, Folia on different versions
 

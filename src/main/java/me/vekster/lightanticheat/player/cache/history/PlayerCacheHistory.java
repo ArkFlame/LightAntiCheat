@@ -1,66 +1,30 @@
 package me.vekster.lightanticheat.player.cache.history;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 
 public class PlayerCacheHistory<T> {
 
-    public PlayerCacheHistory(T object) {
-        HISTORY.addAll(Collections.synchronizedList(new ArrayList<>(Arrays.asList(object, object, object,
-                object, object, object, object, object, object, object, object))));
-    }
+    private final Object[] values = new Object[HistoryElement.count()];
+    private int nextIndex;
 
-    private final List<T> HISTORY = Collections.synchronizedList(new ArrayList<>());
-
-    public void add(T value) {
-        HISTORY.add(value);
-        HISTORY.remove(0);
-    }
-
-    private T get(int index) {
-        return HISTORY.get(index);
-    }
-
-    public T get(HistoryElement element) {
-        T result = null;
-        switch (element) {
-            case FROM:
-                result = get(10);
-                break;
-            case FIRST:
-                result = get(9);
-                break;
-            case SECOND:
-                result = get(8);
-                break;
-            case THIRD:
-                result = get(7);
-                break;
-            case FOURTH:
-                result = get(6);
-                break;
-            case FIFTH:
-                result = get(5);
-                break;
-            case SIXTH:
-                result = get(4);
-                break;
-            case SEVENTH:
-                result = get(3);
-                break;
-            case EIGHT:
-                result = get(2);
-                break;
-            case NINTH:
-                result = get(1);
-                break;
-            case TENTH:
-                result = get(0);
-                break;
+    public PlayerCacheHistory(T initial) {
+        Objects.requireNonNull(initial, "initial");
+        for (int i = 0; i < values.length; i++) {
+            values[i] = initial;
         }
-        return result;
+        this.nextIndex = 0;
+    }
+
+    public synchronized void add(T value) {
+        values[nextIndex] = value;
+        nextIndex = (nextIndex + 1) % values.length;
+    }
+
+    @SuppressWarnings("unchecked")
+    public synchronized T get(HistoryElement element) {
+        int newest = Math.floorMod(nextIndex - 1, values.length);
+        int idx = Math.floorMod(newest - element.offset(), values.length);
+        return (T) values[idx];
     }
 
 }

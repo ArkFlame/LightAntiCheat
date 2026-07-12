@@ -3,7 +3,10 @@ package me.vekster.lightanticheat.player;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,15 +21,13 @@ public final class LACPlayerManager {
     }
 
     public static LACPlayer attach(Player player) {
+        Objects.requireNonNull(player, "player");
         UUID uuid = player.getUniqueId();
-        LACPlayer existing = PLAYERS.compute(uuid, (k, value) -> {
-            if (value == null) {
-                value = new LACPlayer(player);
-            }
-            value.attach(player);
-            return value;
-        });
-        return existing;
+        LACPlayer candidate = new LACPlayer(player);
+        LACPlayer existing = PLAYERS.putIfAbsent(uuid, candidate);
+        LACPlayer wrapper = existing != null ? existing : candidate;
+        wrapper.attach(player);
+        return wrapper;
     }
 
     public static Optional<LACPlayer> find(UUID uuid) {
@@ -38,7 +39,7 @@ public final class LACPlayerManager {
     }
 
     public static Collection<LACPlayer> values() {
-        return PLAYERS.values();
+        return Collections.unmodifiableList(new ArrayList<LACPlayer>(PLAYERS.values()));
     }
 
     public static Optional<LACPlayer.Context> capture(Player player) {
@@ -67,7 +68,7 @@ public final class LACPlayerManager {
 
     public static void execute(Player player, boolean force, Consumer<LACPlayer.Context> action) {
         Optional<LACPlayer.Context> ctx = capture(player);
-        if (ctx.isEmpty()) return;
+        if (!ctx.isPresent()) return;
         LACPlayer.Context context = ctx.get();
         Scheduler.entityThread(player, force, () -> {
             if (!context.isCurrent()) return;
@@ -94,22 +95,22 @@ public final class LACPlayerManager {
     }
 
     public static void queueStateRefresh(Player player, Consumer<LACPlayer.Context> action) {
-        capture(player).ifPresent(context -> {
-            if (!context.owner().tryQueueStateRefresh(context)) return;
-            try {
-                execute(context, true, ctx -> {
-                    try {
-                        action.accept(ctx);
-                    } finally {
-                        ctx.owner().finishStateRefresh(ctx);
-                    }
-                });
-            } catch (Throwable t) {
-                context.owner().finishStateRefresh(context);
-                throw t;
-            } finally {
-            }
-        });
+        Optional<LACPlayer.Context> ctxOpt = capture(player);
+        if (!ctxOpt.isPresent()) return;
+        LACPlayer.Context context = ctxOpt.get();
+        if (!context.owner().tryQueueStateRefresh(context)) return;
+        try {
+            execute(context, true, ctx -> {
+                try {
+                    action.accept(ctx);
+                } finally {
+                    ctx.owner().finishStateRefresh(ctx);
+                }
+            });
+        } catch (RuntimeException exception) {
+            context.owner().finishStateRefresh(context);
+            throw exception;
+        }
     }
 
 }

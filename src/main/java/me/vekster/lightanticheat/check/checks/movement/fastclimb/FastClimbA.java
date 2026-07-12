@@ -133,9 +133,10 @@ public class FastClimbA extends MovementCheck implements Listener {
         boolean vertical = distanceVertical(event.getFrom(), event.getTo()) >= 0;
         Location eventPrevious = null;
         Location packetPrevious = null;
-        for (int i = 0; i < 5 && i < HistoryElement.values().length; i++) {
-            Location eventLocation = cache.history.onEvent.location.get(HistoryElement.values()[i]);
-            Location packetLocation = cache.history.onPacket.location.get(HistoryElement.values()[i]);
+        for (int i = 0; i < 5 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            Location eventLocation = cache.history.onEvent.location.get(element);
+            Location packetLocation = cache.history.onPacket.location.get(element);
             if (eventPrevious == null) {
                 eventPrevious = eventLocation;
                 packetPrevious = packetLocation;

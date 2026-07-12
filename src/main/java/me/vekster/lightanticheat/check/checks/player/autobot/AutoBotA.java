@@ -54,8 +54,8 @@ public class AutoBotA extends PlayerCheck implements Listener {
         if (integerHeadRotation(from, to, true))
             flag = true;
 
-        for (HistoryElement element : HistoryElement.values()) {
-            Location location = cache.history.onEvent.location.get(element);
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            Location location = cache.history.onEvent.location.get(HistoryElement.at(i));
             if (integerHeadRotation(location, to, false))
                 flag = true;
         }
@@ -135,9 +135,10 @@ public class AutoBotA extends PlayerCheck implements Listener {
                 currentTime - cache.lastStrongKbVelocity <= 1500 || currentTime - cache.lastStrongAirKbVelocity <= 15 * 1000)
             return;
 
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++) {
-            if (!cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsFalse ||
-                    !cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsFalse)
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (!cache.history.onEvent.onGround.get(element).towardsFalse ||
+                    !cache.history.onPacket.onGround.get(element).towardsFalse)
                 return;
         }
 

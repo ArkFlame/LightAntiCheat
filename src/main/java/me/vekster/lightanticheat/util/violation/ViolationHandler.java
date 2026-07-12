@@ -24,11 +24,20 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ViolationHandler implements Listener {
+
+    private static final Set<CheckName> VERTICAL_SETBACK_CHECKS =
+            Collections.unmodifiableSet(EnumSet.of(
+                    CheckName.FLIGHT_A, CheckName.FLIGHT_B, CheckName.FLIGHT_C));
+
+    private static final Set<CheckName> POST_VERTICAL_SETBACK_CHECKS =
+            Collections.unmodifiableSet(EnumSet.of(
+                    CheckName.SPEED_A, CheckName.SPEED_B, CheckName.SPEED_C, CheckName.JUMP_A, CheckName.JUMP_B));
 
     private static boolean isVerticalSetback(Player player, LACPlayer lacPlayer, CheckSetting checkSetting) {
         if (checkSetting.name.type != CheckName.CheckType.MOVEMENT)
@@ -38,17 +47,10 @@ public class ViolationHandler implements Listener {
         if (lacPlayer.cache.history.onEvent.onGround.get(HistoryElement.FIRST).towardsTrue)
             return false;
 
-        Set<CheckName> checks = new HashSet<>(Arrays.asList(
-                CheckName.FLIGHT_A, CheckName.FLIGHT_B, CheckName.FLIGHT_C
-        ));
-        Set<CheckName> additionalChecks = new HashSet<>(Arrays.asList(
-                CheckName.SPEED_A, CheckName.SPEED_B, CheckName.SPEED_C, CheckName.JUMP_A, CheckName.JUMP_B
-        ));
-
-        boolean vSetback = checks.contains(checkSetting.name);
+        boolean vSetback = VERTICAL_SETBACK_CHECKS.contains(checkSetting.name);
         boolean afterVSetback = false;
-        if (additionalChecks.contains(checkSetting.name)) {
-            for (CheckName checkName : checks) {
+        if (POST_VERTICAL_SETBACK_CHECKS.contains(checkSetting.name)) {
+            for (CheckName checkName : VERTICAL_SETBACK_CHECKS) {
                 if (lacPlayer.violations.getViolations(checkName) < Math.min(5, checkSetting.punishmentVio / 2))
                     continue;
                 afterVSetback = true;
@@ -97,24 +99,30 @@ public class ViolationHandler implements Listener {
         long currentTime = System.currentTimeMillis();
         if (ConfigManager.Config.Log.enabled) {
             if (ConfigManager.Config.Log.LogViolations.enabled &&
-                    currentTime - lacPlayer.violations.violationLogTime > ConfigManager.Config.Log.LogViolations.cooldown) {
-                lacPlayer.violations.violationLogTime = currentTime;
+                    lacPlayer.violations.tryAcquire(
+                            PlayerViolations.NotificationChannel.VIOLATION_LOG,
+                            currentTime,
+                            ConfigManager.Config.Log.LogViolations.cooldown)) {
                 Logger.logFile(PlaceholderConvertor.swapAll(ConfigManager.Config.Log.LogViolations.message,
                         checkSetting, event.getPlayer(), lacPlayer));
             }
         }
 
         if (ConfigManager.Config.Alerts.BroadcastViolations.enabled &&
-                currentTime - lacPlayer.violations.violationDebugTime > ConfigManager.Config.Alerts.BroadcastViolations.cooldown) {
-            lacPlayer.violations.violationDebugTime = currentTime;
+                lacPlayer.violations.tryAcquire(
+                        PlayerViolations.NotificationChannel.VIOLATION_ALERT,
+                        currentTime,
+                        ConfigManager.Config.Alerts.BroadcastViolations.cooldown)) {
             Logger.logAlert(ConfigManager.Config.Alerts.BroadcastViolations.message,
                     checkSetting, event.getPlayer(), lacPlayer);
         }
 
         if (ConfigManager.Config.DiscordWebhook.enabled) {
             if (ConfigManager.Config.DiscordWebhook.SendViolations.enabled &&
-                    currentTime - lacPlayer.violations.violationDiscordTime > ConfigManager.Config.DiscordWebhook.SendViolations.cooldown) {
-                lacPlayer.violations.violationDiscordTime = currentTime;
+                    lacPlayer.violations.tryAcquire(
+                            PlayerViolations.NotificationChannel.VIOLATION_DISCORD,
+                            currentTime,
+                            ConfigManager.Config.DiscordWebhook.SendViolations.cooldown)) {
                 Logger.logDiscord(PlaceholderConvertor.swapAll(ConfigManager.Config.DiscordWebhook.SendViolations.message,
                         checkSetting, event.getPlayer(), lacPlayer), false);
             }
@@ -184,24 +192,30 @@ public class ViolationHandler implements Listener {
         long currentTime = System.currentTimeMillis();
         if (ConfigManager.Config.Log.enabled) {
             if (ConfigManager.Config.Log.LogPunishments.enabled &&
-                    currentTime - lacPlayer.violations.punishmentLogTime > ConfigManager.Config.Log.LogPunishments.cooldown) {
-                lacPlayer.violations.punishmentLogTime = currentTime;
+                    lacPlayer.violations.tryAcquire(
+                            PlayerViolations.NotificationChannel.PUNISHMENT_LOG,
+                            currentTime,
+                            ConfigManager.Config.Log.LogPunishments.cooldown)) {
                 Logger.logFile(PlaceholderConvertor.swapAll(ConfigManager.Config.Log.LogPunishments.message,
                         checkSetting, event.getPlayer(), lacPlayer));
             }
         }
 
         if (ConfigManager.Config.Alerts.BroadcastPunishments.enabled &&
-                currentTime - lacPlayer.violations.punishmentDebugTime > ConfigManager.Config.Alerts.BroadcastPunishments.cooldown) {
-            lacPlayer.violations.punishmentDebugTime = currentTime;
+                lacPlayer.violations.tryAcquire(
+                        PlayerViolations.NotificationChannel.PUNISHMENT_ALERT,
+                        currentTime,
+                        ConfigManager.Config.Alerts.BroadcastPunishments.cooldown)) {
             Logger.logAlert(ConfigManager.Config.Alerts.BroadcastPunishments.message,
                     checkSetting, event.getPlayer(), lacPlayer);
         }
 
         if (ConfigManager.Config.DiscordWebhook.enabled) {
             if (ConfigManager.Config.DiscordWebhook.SendPunishments.enabled &&
-                    currentTime - lacPlayer.violations.punishmentDiscordTime > ConfigManager.Config.DiscordWebhook.SendPunishments.cooldown) {
-                lacPlayer.violations.punishmentDiscordTime = currentTime;
+                    lacPlayer.violations.tryAcquire(
+                            PlayerViolations.NotificationChannel.PUNISHMENT_DISCORD,
+                            currentTime,
+                            ConfigManager.Config.DiscordWebhook.SendPunishments.cooldown)) {
                 Logger.logDiscord(PlaceholderConvertor.swapAll(ConfigManager.Config.DiscordWebhook.SendPunishments.message,
                         checkSetting, event.getPlayer(), lacPlayer), true);
             }

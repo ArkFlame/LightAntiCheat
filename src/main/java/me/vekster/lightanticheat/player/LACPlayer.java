@@ -39,17 +39,77 @@ public class LACPlayer extends VerPlayer {
     volatile UUID worldId;
     volatile boolean active;
 
-    public record Context(LACPlayer owner, Player player, PlayerCache cache, UUID worldId, long epoch) {
-        public Context {
+    public static final class Context {
+        private final LACPlayer owner;
+        private final Player player;
+        private final PlayerCache cache;
+        private final UUID worldId;
+        private final long epoch;
+
+        public Context(LACPlayer owner, Player player, PlayerCache cache, UUID worldId, long epoch) {
             Objects.requireNonNull(owner, "owner");
             Objects.requireNonNull(player, "player");
             Objects.requireNonNull(cache, "cache");
             Objects.requireNonNull(worldId, "worldId");
-            if (epoch < 1L) throw new IllegalArgumentException("epoch must be >= 1");
+            if (epoch < 1L) {
+                throw new IllegalArgumentException("epoch must be >= 1");
+            }
+            this.owner = owner;
+            this.player = player;
+            this.cache = cache;
+            this.worldId = worldId;
+            this.epoch = epoch;
+        }
+
+        public LACPlayer owner() {
+            return owner;
+        }
+
+        public Player player() {
+            return player;
+        }
+
+        public PlayerCache cache() {
+            return cache;
+        }
+
+        public UUID worldId() {
+            return worldId;
+        }
+
+        public long epoch() {
+            return epoch;
         }
 
         public boolean isCurrent() {
             return owner.isCurrent(this);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (!(object instanceof Context)) return false;
+            Context other = (Context) object;
+            if (epoch != other.epoch) return false;
+            if (!Objects.equals(owner, other.owner)) return false;
+            if (!Objects.equals(player, other.player)) return false;
+            if (!Objects.equals(cache, other.cache)) return false;
+            return Objects.equals(worldId, other.worldId);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = owner != null ? owner.hashCode() : 0;
+            result = 31 * result + (player != null ? player.hashCode() : 0);
+            result = 31 * result + (cache != null ? cache.hashCode() : 0);
+            result = 31 * result + (worldId != null ? worldId.hashCode() : 0);
+            result = 31 * result + (int) (epoch ^ (epoch >>> 32));
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Context{owner=" + owner + ", player=" + player + ", cache=" + cache + ", worldId=" + worldId + ", epoch=" + epoch + '}';
         }
     }
 

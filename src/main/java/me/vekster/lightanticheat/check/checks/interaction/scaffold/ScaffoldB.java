@@ -50,9 +50,10 @@ public class ScaffoldB extends InteractionCheck implements Listener {
                 getEffectAmplifier(player, PotionEffectType.SPEED) > 5)
             return;
 
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++) {
-            if (!cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsFalse ||
-                    !cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsFalse)
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (!cache.history.onEvent.onGround.get(element).towardsFalse ||
+                    !cache.history.onPacket.onGround.get(element).towardsFalse)
                 return;
         }
 

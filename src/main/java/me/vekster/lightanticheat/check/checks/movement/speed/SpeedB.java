@@ -112,8 +112,9 @@ public class SpeedB extends MovementCheck implements Listener {
         }
 
         PlayerCache.OnGround newerOnGround = null;
-        for (int i = 0; i < 6 && i < HistoryElement.values().length; i++) {
-            PlayerCache.OnGround onGround = cache.history.onEvent.onGround.get(HistoryElement.values()[i]);
+        for (int i = 0; i < 6 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            PlayerCache.OnGround onGround = cache.history.onEvent.onGround.get(element);
             if (newerOnGround == null) {
                 newerOnGround = onGround;
                 continue;
@@ -125,8 +126,9 @@ public class SpeedB extends MovementCheck implements Listener {
             newerOnGround = onGround;
         }
         newerOnGround = null;
-        for (int i = 0; i < 6 && i < HistoryElement.values().length; i++) {
-            PlayerCache.OnGround onGround = cache.history.onPacket.onGround.get(HistoryElement.values()[i]);
+        for (int i = 0; i < 6 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            PlayerCache.OnGround onGround = cache.history.onPacket.onGround.get(element);
             if (newerOnGround == null) {
                 newerOnGround = onGround;
                 continue;

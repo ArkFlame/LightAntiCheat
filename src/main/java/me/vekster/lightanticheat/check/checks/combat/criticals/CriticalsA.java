@@ -153,8 +153,8 @@ public class CriticalsA extends CombatCheck implements Listener {
         double maxY = Double.MIN_VALUE;
         double previousY = Double.MIN_VALUE;
         boolean bounce = false;
-        for (HistoryElement historyElement : HistoryElement.values()) {
-            double y = cache.history.onPacket.location.get(historyElement).getY();
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            double y = cache.history.onPacket.location.get(HistoryElement.at(i)).getY();
             minY = Math.min(minY, y);
             maxY = Math.max(maxY, y);
             if (previousY == Double.MIN_VALUE) {

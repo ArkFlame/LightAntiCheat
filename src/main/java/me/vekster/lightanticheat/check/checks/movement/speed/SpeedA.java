@@ -324,10 +324,12 @@ public class SpeedA extends MovementCheck implements Listener {
         if (buffer.getInt("airSpeedTicks") <= 2)
             return;
 
-        for (int i = 0; i < 4 && i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue)
+        for (int i = 0; i < 4 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue)
                 return;
+        }
 
         Location to = event.getTo();
         Location from = event.getFrom();

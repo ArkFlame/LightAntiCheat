@@ -77,12 +77,14 @@ public class ElytraA extends MovementCheck implements Listener {
             return;
         }
 
-        for (int i = 0; i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("theSameSpeedEvents", 0);
                 return;
             }
+        }
 
         long currentTime = System.currentTimeMillis();
         if (currentTime - buffer.getLong("effectTime") < 1000) {
@@ -112,8 +114,8 @@ public class ElytraA extends MovementCheck implements Listener {
         double hSpeed = distanceHorizontal(event.getFrom(), event.getTo());
         float pitchDifference = 0;
         Location newerLocation = event.getTo();
-        for (int i = 0; i < HistoryElement.values().length; i++) {
-            Location location = cache.history.onEvent.location.get(HistoryElement.values()[i]);
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            Location location = cache.history.onEvent.location.get(HistoryElement.at(i));
             if (Math.abs(speed - distance(location, newerLocation)) >= 0.00005 &&
                     Math.abs(hSpeed - distanceHorizontal(location, newerLocation)) >= 0.00005)
                 return;
@@ -161,12 +163,14 @@ public class ElytraA extends MovementCheck implements Listener {
             return;
         }
 
-        for (int i = 0; i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("tooLowSpeedEvents", 0);
                 return;
             }
+        }
 
         long currentTime = System.currentTimeMillis();
         if (currentTime - buffer.getLong("effectTime") < 1000) {
@@ -195,8 +199,8 @@ public class ElytraA extends MovementCheck implements Listener {
         float yawDifference = 0;
         float pitchDifference = 0;
         Location newerLocation = event.getTo();
-        for (int i = 0; i < HistoryElement.values().length; i++) {
-            Location location = cache.history.onEvent.location.get(HistoryElement.values()[i]);
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            Location location = cache.history.onEvent.location.get(HistoryElement.at(i));
             if (distance(location, newerLocation) > 0.025)
                 return;
             pitchDifference = Math.max(Math.abs(newerLocation.getPitch() - location.getPitch()), pitchDifference);

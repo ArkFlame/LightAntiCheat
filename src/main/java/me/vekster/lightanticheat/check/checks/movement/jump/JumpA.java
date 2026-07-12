@@ -128,10 +128,11 @@ public class JumpA extends MovementCheck implements Listener {
 /*    private boolean firstFlag(Player player, PlayerCache cache, Location from, Location to) {
         boolean eventGround = false;
         boolean packetGround = false;
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++) {
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsFalse)
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsFalse)
                 eventGround = true;
-            if (cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsFalse)
+            if (cache.history.onPacket.onGround.get(element).towardsFalse)
                 packetGround = true;
             if (eventGround && packetGround)
                 break;
@@ -166,11 +167,12 @@ public class JumpA extends MovementCheck implements Listener {
         int maxEventGround = 0;
         int packetGround = 0;
         int maxPacketGround = 0;
-        for (int i = 0; i < 6 && i < HistoryElement.values().length; i++) {
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsFalse) eventGround++;
+        for (int i = 0; i < 6 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsFalse) eventGround++;
             else eventGround = 0;
             maxEventGround = Math.max(maxEventGround, eventGround);
-            if (cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsFalse) packetGround++;
+            if (cache.history.onPacket.onGround.get(element).towardsFalse) packetGround++;
             else packetGround = 0;
             maxPacketGround = Math.max(maxPacketGround, packetGround);
         }

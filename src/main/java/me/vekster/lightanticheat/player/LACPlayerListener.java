@@ -207,10 +207,12 @@ public class LACPlayerListener implements Listener {
                 return;
             if (player.getFallDistance() < 4.0)
                 return;
-            for (int i = 0; i < 3 && i < HistoryElement.values().length; i++)
-                if (lacPlayer.cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                        lacPlayer.cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue)
+            for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+                final HistoryElement element = HistoryElement.at(i);
+                if (lacPlayer.cache.history.onEvent.onGround.get(element).towardsTrue ||
+                        lacPlayer.cache.history.onPacket.onGround.get(element).towardsTrue)
                     return;
+            }
             boolean ground = false;
             for (Block block : CheckUtil.getDownBlocks(player, 0.1)) {
                 if (VerUtil.isPassable(block))

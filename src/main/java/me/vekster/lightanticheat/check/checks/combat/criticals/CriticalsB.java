@@ -98,9 +98,10 @@ public class CriticalsB extends CombatCheck implements Listener {
             return;
 
         boolean ground = true;
-        for (int i = 0; i < 5 && i < HistoryElement.values().length; i++) {
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < 5 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 ground = false;
                 break;
             }
@@ -110,9 +111,10 @@ public class CriticalsB extends CombatCheck implements Listener {
 
         double maxY = Double.MIN_VALUE;
         double minY = Double.MAX_VALUE;
-        for (int i = 0; i < 10 && i < HistoryElement.values().length; i++) {
-            Location eventLocation = cache.history.onEvent.location.get(HistoryElement.values()[i]);
-            Location packetLocation = cache.history.onPacket.location.get(HistoryElement.values()[i]);
+        for (int i = 0; i < 10 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            Location eventLocation = cache.history.onEvent.location.get(element);
+            Location packetLocation = cache.history.onPacket.location.get(element);
             maxY = Math.max(maxY, Math.min(eventLocation.getY(), packetLocation.getY()));
             minY = Math.min(minY, Math.min(eventLocation.getY(), packetLocation.getY()));
         }

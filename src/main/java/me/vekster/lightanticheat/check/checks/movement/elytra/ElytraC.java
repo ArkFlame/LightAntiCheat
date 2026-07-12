@@ -18,10 +18,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Fast takeoff without a firework
@@ -31,8 +30,20 @@ public class ElytraC extends MovementCheck implements Listener {
         super(CheckName.ELYTRA_C);
     }
 
-    private static final Map<Integer, Double> TICK_SPEEDS = new ConcurrentHashMap<>();
-    private static final Map<Integer, Double> EVENT_SPEEDS = new ConcurrentHashMap<>();
+    private static final double[] TICK_SPEEDS = new double[41];
+    private static final double[] EVENT_SPEEDS = new double[39];
+
+    private static double tickSpeedLimit(int tick) {
+        if (tick < 0 || tick >= TICK_SPEEDS.length) return Double.MAX_VALUE;
+        double v = TICK_SPEEDS[tick];
+        return Double.isNaN(v) ? Double.MAX_VALUE : v;
+    }
+
+    private static double eventSpeedLimit(int event) {
+        if (event < 0 || event >= EVENT_SPEEDS.length) return Double.MAX_VALUE;
+        double v = EVENT_SPEEDS[event];
+        return Double.isNaN(v) ? Double.MAX_VALUE : v;
+    }
 
     @Override
     public boolean isConditionAllowed(Player player, LACPlayer lacPlayer, PlayerCache cache, boolean isClimbing, boolean isInWater,
@@ -119,9 +130,9 @@ public class ElytraC extends MovementCheck implements Listener {
         if (buffer.getInt("glidingEvents") <= 1)
             return;
 
-        double maxTickSpeed = TICK_SPEEDS.getOrDefault(cache.glidingTicks, Double.MAX_VALUE);
+        double maxTickSpeed = tickSpeedLimit(cache.glidingTicks);
         if (maxTickSpeed == Double.MAX_VALUE) return;
-        double maxEventSpeed = EVENT_SPEEDS.getOrDefault(buffer.getInt("glidingEvents"), Double.MAX_VALUE);
+        double maxEventSpeed = eventSpeedLimit(buffer.getInt("glidingEvents"));
         if (maxEventSpeed == Double.MAX_VALUE) return;
 
         double horizontalSpeed = distanceHorizontal(event.getFrom(), event.getTo());
@@ -152,83 +163,82 @@ public class ElytraC extends MovementCheck implements Listener {
     }
 
     static {
-        TICK_SPEEDS.put(4, 0.44734879260319627);
-        TICK_SPEEDS.put(5, 0.44734879260319627);
-        TICK_SPEEDS.put(6, 0.44734879260319627);
-        TICK_SPEEDS.put(7, 0.44734879260319627);
-        TICK_SPEEDS.put(8, 0.44734879260319627);
-        TICK_SPEEDS.put(9, 0.44734879260319627);
-        TICK_SPEEDS.put(10, 0.44734879260319627);
-        TICK_SPEEDS.put(11, 0.44734879260319627);
-        TICK_SPEEDS.put(12, 0.44734879260319627);
-        TICK_SPEEDS.put(13, 0.4678633848470381);
-        TICK_SPEEDS.put(14, 0.4678633848470381);
-        TICK_SPEEDS.put(15, 0.5096458131240956);
-        TICK_SPEEDS.put(16, 0.5096458131240956);
-        TICK_SPEEDS.put(17, 0.5096458131240956);
-        TICK_SPEEDS.put(18, 0.5096458131240956);
-        TICK_SPEEDS.put(19, 0.5096458131240956);
-        TICK_SPEEDS.put(20, 0.5096458131240956);
-        TICK_SPEEDS.put(21, 0.6363293271295004);
-        TICK_SPEEDS.put(22, 0.6363293271295004);
-        TICK_SPEEDS.put(23, 0.6363293271295004);
-        TICK_SPEEDS.put(24, 0.6363293271295004);
-        TICK_SPEEDS.put(25, 0.6363293271295004);
-        TICK_SPEEDS.put(26, 0.6363293271295004);
-        TICK_SPEEDS.put(27, 0.6363293271295004);
-        TICK_SPEEDS.put(28, 0.7761990432739139);
-        TICK_SPEEDS.put(29, 0.7761990432739139);
-        TICK_SPEEDS.put(30, 0.7761990432739139);
-        TICK_SPEEDS.put(31, 0.7761990432739139);
-        TICK_SPEEDS.put(32, 0.7812136208841997);
-        TICK_SPEEDS.put(33, 0.8276965891878098);
-        TICK_SPEEDS.put(34, 0.8736567587535112);
-        TICK_SPEEDS.put(35, 0.9183020882937782);
-        TICK_SPEEDS.put(36, 0.9999682347314106);
-        TICK_SPEEDS.put(37, 1.0135098587188913);
-        TICK_SPEEDS.put(38, 1.0364071500995329);
-        TICK_SPEEDS.put(39, 1.0696900826352207);
-        TICK_SPEEDS.put(40, 1.100002594538592);
-    }
-
-    static {
-        EVENT_SPEEDS.put(2, 0.27182645707616016);
-        EVENT_SPEEDS.put(3, 0.27182645707616016);
-        EVENT_SPEEDS.put(4, 0.27182645707616016);
-        EVENT_SPEEDS.put(5, 0.27182645707616016);
-        EVENT_SPEEDS.put(6, 0.27182645707616016);
-        EVENT_SPEEDS.put(7, 0.27182645707616016);
-        EVENT_SPEEDS.put(8, 0.27182645707616016);
-        EVENT_SPEEDS.put(9, 0.27182645707616016);
-        EVENT_SPEEDS.put(10, 0.27182645707616016);
-        EVENT_SPEEDS.put(11, 0.27182645707616016);
-        EVENT_SPEEDS.put(12, 0.28429297909853596);
-        EVENT_SPEEDS.put(13, 0.29731067574460923);
-        EVENT_SPEEDS.put(14, 0.3110668199157708);
-        EVENT_SPEEDS.put(15, 0.3262354959638223);
-        EVENT_SPEEDS.put(16, 0.3449602243391874);
-        EVENT_SPEEDS.put(17, 0.3662675896438863);
-        EVENT_SPEEDS.put(18, 0.3904261112530776);
-        EVENT_SPEEDS.put(19, 0.416232566957176);
-        EVENT_SPEEDS.put(20, 0.4431727632559902);
-        EVENT_SPEEDS.put(21, 0.4716248088280485);
-        EVENT_SPEEDS.put(22, 0.5016334162704484);
-        EVENT_SPEEDS.put(23, 0.5329268013209907);
-        EVENT_SPEEDS.put(24, 0.565231662539986);
-        EVENT_SPEEDS.put(25, 0.600932554447271);
-        EVENT_SPEEDS.put(26, 0.6414542902207322);
-        EVENT_SPEEDS.put(27, 0.6868105839578575);
-        EVENT_SPEEDS.put(28, 0.734397683958967);
-        EVENT_SPEEDS.put(29, 0.7812136208841997);
-        EVENT_SPEEDS.put(30, 0.8276965891878098);
-        EVENT_SPEEDS.put(31, 0.8736567587535112);
-        EVENT_SPEEDS.put(32, 0.9183020882937782);
-        EVENT_SPEEDS.put(33, 0.9604544698562417);
-        EVENT_SPEEDS.put(34, 0.9999682347314106);
-        EVENT_SPEEDS.put(35, 1.0364071500995329);
-        EVENT_SPEEDS.put(36, 1.0696900826352207);
-        EVENT_SPEEDS.put(37, 1.100002594538592);
-        EVENT_SPEEDS.put(38, 1.1278065520749856);
+        java.util.Arrays.fill(TICK_SPEEDS, Double.NaN);
+        java.util.Arrays.fill(EVENT_SPEEDS, Double.NaN);
+        TICK_SPEEDS[4] = 0.44734879260319627D;
+        TICK_SPEEDS[5] = 0.44734879260319627D;
+        TICK_SPEEDS[6] = 0.44734879260319627D;
+        TICK_SPEEDS[7] = 0.44734879260319627D;
+        TICK_SPEEDS[8] = 0.44734879260319627D;
+        TICK_SPEEDS[9] = 0.44734879260319627D;
+        TICK_SPEEDS[10] = 0.44734879260319627D;
+        TICK_SPEEDS[11] = 0.44734879260319627D;
+        TICK_SPEEDS[12] = 0.44734879260319627D;
+        TICK_SPEEDS[13] = 0.4678633848470381D;
+        TICK_SPEEDS[14] = 0.4678633848470381D;
+        TICK_SPEEDS[15] = 0.5096458131240956D;
+        TICK_SPEEDS[16] = 0.5096458131240956D;
+        TICK_SPEEDS[17] = 0.5096458131240956D;
+        TICK_SPEEDS[18] = 0.5096458131240956D;
+        TICK_SPEEDS[19] = 0.5096458131240956D;
+        TICK_SPEEDS[20] = 0.5096458131240956D;
+        TICK_SPEEDS[21] = 0.6363293271295004D;
+        TICK_SPEEDS[22] = 0.6363293271295004D;
+        TICK_SPEEDS[23] = 0.6363293271295004D;
+        TICK_SPEEDS[24] = 0.6363293271295004D;
+        TICK_SPEEDS[25] = 0.6363293271295004D;
+        TICK_SPEEDS[26] = 0.6363293271295004D;
+        TICK_SPEEDS[27] = 0.6363293271295004D;
+        TICK_SPEEDS[28] = 0.7761990432739139D;
+        TICK_SPEEDS[29] = 0.7761990432739139D;
+        TICK_SPEEDS[30] = 0.7761990432739139D;
+        TICK_SPEEDS[31] = 0.7761990432739139D;
+        TICK_SPEEDS[32] = 0.7812136208841997D;
+        TICK_SPEEDS[33] = 0.8276965891878098D;
+        TICK_SPEEDS[34] = 0.8736567587535112D;
+        TICK_SPEEDS[35] = 0.9183020882937782D;
+        TICK_SPEEDS[36] = 0.9999682347314106D;
+        TICK_SPEEDS[37] = 1.0135098587188913D;
+        TICK_SPEEDS[38] = 1.0364071500995329D;
+        TICK_SPEEDS[39] = 1.0696900826352207D;
+        TICK_SPEEDS[40] = 1.100002594538592D;
+        EVENT_SPEEDS[2] = 0.27182645707616016D;
+        EVENT_SPEEDS[3] = 0.27182645707616016D;
+        EVENT_SPEEDS[4] = 0.27182645707616016D;
+        EVENT_SPEEDS[5] = 0.27182645707616016D;
+        EVENT_SPEEDS[6] = 0.27182645707616016D;
+        EVENT_SPEEDS[7] = 0.27182645707616016D;
+        EVENT_SPEEDS[8] = 0.27182645707616016D;
+        EVENT_SPEEDS[9] = 0.27182645707616016D;
+        EVENT_SPEEDS[10] = 0.27182645707616016D;
+        EVENT_SPEEDS[11] = 0.27182645707616016D;
+        EVENT_SPEEDS[12] = 0.28429297909853596D;
+        EVENT_SPEEDS[13] = 0.29731067574460923D;
+        EVENT_SPEEDS[14] = 0.3110668199157708D;
+        EVENT_SPEEDS[15] = 0.3262354959638223D;
+        EVENT_SPEEDS[16] = 0.3449602243391874D;
+        EVENT_SPEEDS[17] = 0.3662675896438863D;
+        EVENT_SPEEDS[18] = 0.3904261112530776D;
+        EVENT_SPEEDS[19] = 0.416232566957176D;
+        EVENT_SPEEDS[20] = 0.4431727632559902D;
+        EVENT_SPEEDS[21] = 0.4716248088280485D;
+        EVENT_SPEEDS[22] = 0.5016334162704484D;
+        EVENT_SPEEDS[23] = 0.5329268013209907D;
+        EVENT_SPEEDS[24] = 0.565231662539986D;
+        EVENT_SPEEDS[25] = 0.600932554447271D;
+        EVENT_SPEEDS[26] = 0.6414542902207322D;
+        EVENT_SPEEDS[27] = 0.6868105839578575D;
+        EVENT_SPEEDS[28] = 0.734397683958967D;
+        EVENT_SPEEDS[29] = 0.7812136208841997D;
+        EVENT_SPEEDS[30] = 0.8276965891878098D;
+        EVENT_SPEEDS[31] = 0.8736567587535112D;
+        EVENT_SPEEDS[32] = 0.9183020882937782D;
+        EVENT_SPEEDS[33] = 0.9604544698562417D;
+        EVENT_SPEEDS[34] = 0.9999682347314106D;
+        EVENT_SPEEDS[35] = 1.0364071500995329D;
+        EVENT_SPEEDS[36] = 1.0696900826352207D;
+        EVENT_SPEEDS[37] = 1.100002594538592D;
+        EVENT_SPEEDS[38] = 1.1278065520749856D;
     }
 
 }

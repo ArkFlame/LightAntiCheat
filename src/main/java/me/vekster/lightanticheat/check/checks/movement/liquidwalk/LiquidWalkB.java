@@ -69,7 +69,8 @@ public class LiquidWalkB extends MovementCheck implements Listener {
         }
 
         boolean blockHeight = false;
-        for (HistoryElement element : HistoryElement.values()) {
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
             if (cache.history.onEvent.onGround.get(element).towardsTrue ||
                     cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("flags", 0);

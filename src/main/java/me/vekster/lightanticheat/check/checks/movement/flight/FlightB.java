@@ -11,6 +11,7 @@ import me.vekster.lightanticheat.player.cache.history.HistoryElement;
 import me.vekster.lightanticheat.util.async.AsyncUtil;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
+import me.vekster.lightanticheat.util.physics.VanillaVerticalPhysics;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Location;
@@ -25,9 +26,7 @@ import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Maximum possible height
@@ -38,8 +37,6 @@ public class FlightB extends MovementCheck implements Listener {
     public FlightB() {
         super(CheckName.FLIGHT_B);
     }
-
-    private static final Map<Integer, Double> HEIGHT_LIMITS = new ConcurrentHashMap<>();
 
     @Override
     public boolean isConditionAllowed(Player player, LACPlayer lacPlayer, PlayerCache cache, boolean isClimbing, boolean isInWater,
@@ -234,7 +231,7 @@ public class FlightB extends MovementCheck implements Listener {
                 height -= 80.0;
         }
 
-        double maxHeight = HEIGHT_LIMITS.getOrDefault(jumpEffectAmplifier, Double.MAX_VALUE);
+        double maxHeight = VanillaVerticalPhysics.maxJumpHeight(jumpEffectAmplifier);
         if (height <= maxHeight)
             return;
 
@@ -366,42 +363,6 @@ public class FlightB extends MovementCheck implements Listener {
             return;
         Buffer buffer = getBuffer(event.getPlayer(), true);
         buffer.put("lastVelocityTime", System.currentTimeMillis());
-    }
-
-    static {
-        HEIGHT_LIMITS.put(0, 1.2491870787446828);
-        HEIGHT_LIMITS.put(1, 1.8229914290304237);
-        HEIGHT_LIMITS.put(2, 2.495504135427751);
-        HEIGHT_LIMITS.put(3, 3.262979208689927);
-        HEIGHT_LIMITS.put(4, 4.121780657759501);
-        HEIGHT_LIMITS.put(5, 5.068380817939499);
-        HEIGHT_LIMITS.put(6, 6.09935681691951);
-        HEIGHT_LIMITS.put(7, 7.211386509209021);
-        HEIGHT_LIMITS.put(8, 8.401247360588883);
-        HEIGHT_LIMITS.put(9, 9.665813316670295);
-        HEIGHT_LIMITS.put(10, 11.00205067446683);
-        HEIGHT_LIMITS.put(11, 12.40702172138586);
-        HEIGHT_LIMITS.put(12, 13.877873208335501);
-        HEIGHT_LIMITS.put(13, 15.411839932915072);
-        HEIGHT_LIMITS.put(14, 17.00623904858685);
-        HEIGHT_LIMITS.put(15, 18.600076567816984);
-        HEIGHT_LIMITS.put(16, 20.320436142409292);
-        HEIGHT_LIMITS.put(17, 22.09475148051476);
-        HEIGHT_LIMITS.put(18, 23.920602111211082);
-        HEIGHT_LIMITS.put(19, 25.795652703139638);
-        HEIGHT_LIMITS.put(20, 27.71764149877518);
-        HEIGHT_LIMITS.put(21, 29.638742958312946);
-        HEIGHT_LIMITS.put(22, 31.66704373015527);
-        HEIGHT_LIMITS.put(23, 33.73672487314393);
-        HEIGHT_LIMITS.put(24, 35.84575686484723);
-        HEIGHT_LIMITS.put(25, 36.42330700836513);
-        HEIGHT_LIMITS.put(26, 40.15228283711707);
-        HEIGHT_LIMITS.put(27, 42.390953289857094);
-        HEIGHT_LIMITS.put(28, 44.6078684568749);
-        HEIGHT_LIMITS.put(29, 46.93469415176959);
-        HEIGHT_LIMITS.put(30, 49.29112651218843);
-        HEIGHT_LIMITS.put(31, 51.618257282853605);
-        HEIGHT_LIMITS.put(32, 54.05607596071225);
     }
 
 }

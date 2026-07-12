@@ -107,12 +107,14 @@ public class SpeedD extends MovementCheck implements Listener {
             }
         }
 
-        for (int i = 0; i < 4 && i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < 4 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("liquidTicks", 0);
                 return;
             }
+        }
 
         Set<Material> downMaterials = new HashSet<>();
         downMaterials.addAll(event.getToDownMaterials());

@@ -7,30 +7,26 @@ import java.util.concurrent.ConcurrentHashMap;
 class PlayerBuffer {
 
     PlayerBuffer(boolean async) {
+        variables = async ? new ConcurrentHashMap<>() : new HashMap<>();
         updated = System.currentTimeMillis();
     }
 
-    private final Map<String, PlayerVariable> PLAYER_VARIABLES = new HashMap<>();
-    private final Map<String, PlayerVariable> ASYNC_PLAYER_VARIABLES = new ConcurrentHashMap<>();
-    long updated;
-    boolean async;
+    private final Map<String, PlayerVariable> variables;
+    volatile long updated;
 
     public boolean containsKey(String key) {
-        Map<String, PlayerVariable> playerVariableMap = !async ? PLAYER_VARIABLES : ASYNC_PLAYER_VARIABLES;
         updated = System.currentTimeMillis();
-        return playerVariableMap.containsKey(key);
+        return variables.containsKey(key);
     }
 
-    public PlayerVariable getOrDefault(String key, PlayerVariable playerVariable) {
-        Map<String, PlayerVariable> playerVariableMap = !async ? PLAYER_VARIABLES : ASYNC_PLAYER_VARIABLES;
+    public PlayerVariable get(String key) {
         updated = System.currentTimeMillis();
-        return playerVariableMap.getOrDefault(key, playerVariable);
+        return variables.get(key);
     }
 
     public void put(String key, PlayerVariable value) {
-        Map<String, PlayerVariable> playerVariableMap = !async ? PLAYER_VARIABLES : ASYNC_PLAYER_VARIABLES;
         updated = System.currentTimeMillis();
-        playerVariableMap.put(key, value);
+        variables.put(key, value);
     }
 
     static class PlayerVariable {
@@ -38,7 +34,7 @@ class PlayerBuffer {
             this.object = object;
         }
 
-        Object object;
+        final Object object;
     }
 
 }

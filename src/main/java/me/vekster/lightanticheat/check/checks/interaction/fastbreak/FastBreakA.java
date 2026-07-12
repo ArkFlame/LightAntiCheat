@@ -24,7 +24,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Map;
 
 /**
@@ -32,34 +33,50 @@ import java.util.Map;
  */
 public class FastBreakA extends InteractionCheck implements Listener {
 
-    static class Duration {
-        public Duration(int stone, int deepslate) {
-            DURATIONS.put(Material.STONE, stone);
-            DURATIONS.put(VerUtil.material.get("DEEPSLATE"), deepslate);
-        }
+    private static final Material DEEPSLATE = VerUtil.material.get("DEEPSLATE");
 
-        private final Map<Material, Integer> DURATIONS = new HashMap<>();
+    private static final Map<Material, MiningDuration> DURATIONS = createDurations(false);
+    private static final Map<Material, MiningDuration> ENCHANTED_DURATIONS = createDurations(true);
 
-        public int getDuration(Material material) {
-            return DURATIONS.getOrDefault(material, 0);
+    private static Map<Material, MiningDuration> createDurations(boolean enchanted) {
+        EnumMap<Material, MiningDuration> map = new EnumMap<>(Material.class);
+        if (enchanted) {
+            putIfPresent(map, VerUtil.material.get("WOODEN_PICKAXE"), new MiningDuration(100, 200));
+            putIfPresent(map, Material.STONE_PICKAXE, new MiningDuration(100, 150));
+            putIfPresent(map, Material.IRON_PICKAXE, new MiningDuration(100, 150));
+            putIfPresent(map, Material.DIAMOND_PICKAXE, new MiningDuration(100, 150));
+            putIfPresent(map, VerUtil.material.get("NETHERITE_PICKAXE"), new MiningDuration(100, 150));
+        } else {
+            putIfPresent(map, VerUtil.material.get("WOODEN_PICKAXE"), new MiningDuration(1150, 2250));
+            putIfPresent(map, Material.STONE_PICKAXE, new MiningDuration(600, 1150));
+            putIfPresent(map, Material.IRON_PICKAXE, new MiningDuration(400, 750));
+            putIfPresent(map, Material.DIAMOND_PICKAXE, new MiningDuration(300, 600));
+            putIfPresent(map, VerUtil.material.get("NETHERITE_PICKAXE"), new MiningDuration(250, 500));
         }
+        return Collections.unmodifiableMap(map);
     }
 
-    private static final Map<Material, Duration> DURATIONS = new HashMap<>();
-    private static final Map<Material, Duration> ENCHANTED_DURATIONS = new HashMap<>();
+    private static void putIfPresent(Map<Material, MiningDuration> map, Material material, MiningDuration duration) {
+        if (material != null)
+            map.put(material, duration);
+    }
 
-    static {
-        DURATIONS.put(VerUtil.material.get("WOODEN_PICKAXE"), new Duration(1150, 2250));
-        DURATIONS.put(Material.STONE_PICKAXE, new Duration(600, 1150));
-        DURATIONS.put(Material.IRON_PICKAXE, new Duration(400, 750));
-        DURATIONS.put(Material.DIAMOND_PICKAXE, new Duration(300, 600));
-        DURATIONS.put(VerUtil.material.get("NETHERITE_PICKAXE"), new Duration(250, 500));
+    private static final class MiningDuration {
+        private final int stoneMillis;
+        private final int deepslateMillis;
 
-        ENCHANTED_DURATIONS.put(VerUtil.material.get("WOODEN_PICKAXE"), new Duration(100, 200));
-        ENCHANTED_DURATIONS.put(Material.STONE_PICKAXE, new Duration(100, 150));
-        ENCHANTED_DURATIONS.put(Material.IRON_PICKAXE, new Duration(100, 150));
-        ENCHANTED_DURATIONS.put(Material.DIAMOND_PICKAXE, new Duration(100, 150));
-        ENCHANTED_DURATIONS.put(VerUtil.material.get("NETHERITE_PICKAXE"), new Duration(100, 150));
+        MiningDuration(int stoneMillis, int deepslateMillis) {
+            this.stoneMillis = stoneMillis;
+            this.deepslateMillis = deepslateMillis;
+        }
+
+        int forMaterial(Material material) {
+            if (material == Material.STONE)
+                return stoneMillis;
+            if (material == DEEPSLATE)
+                return deepslateMillis;
+            return 0;
+        }
     }
 
     public FastBreakA() {
@@ -94,7 +111,7 @@ public class FastBreakA extends InteractionCheck implements Listener {
                 buffer.put("flags", buffer.getInt("flags") - 1);
             return;
         }
-        if (!DURATIONS.containsKey(tool.getType()) || !ENCHANTED_DURATIONS.containsKey(tool.getType())) {
+        if (DURATIONS.get(tool.getType()) == null) {
             if (buffer.getInt("flags") > 0)
                 buffer.put("flags", buffer.getInt("flags") - 1);
             return;
@@ -135,9 +152,7 @@ public class FastBreakA extends InteractionCheck implements Listener {
 
         long interval = System.currentTimeMillis() - buffer.getLong("lastInteraction");
 
-        long maxDuration = !enchantedTool ?
-                DURATIONS.get(tool.getType()).getDuration(block.getType()) :
-                ENCHANTED_DURATIONS.get(tool.getType()).getDuration(block.getType());
+        long maxDuration = (enchantedTool ? ENCHANTED_DURATIONS : DURATIONS).get(tool.getType()).forMaterial(block.getType());
 
         boolean flag = interval < maxDuration / 1.45;
 

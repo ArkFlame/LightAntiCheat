@@ -76,12 +76,14 @@ public class ElytraB extends MovementCheck implements Listener {
             return;
         }
 
-        for (int i = 0; i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("glidingEvents", 0);
                 return;
             }
+        }
 
         long currentTime = System.currentTimeMillis();
         if (currentTime - buffer.getLong("effectTime") < 1000) {

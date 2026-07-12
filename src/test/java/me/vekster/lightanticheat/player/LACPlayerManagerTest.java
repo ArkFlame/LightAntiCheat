@@ -257,6 +257,81 @@ class LACPlayerManagerTest {
         assertTrue(cap.get().epoch() >= 1);
     }
 
+    @Test
+    void contextHasValueSemantics() {
+        Player player = newPlayer();
+        LACPlayerManager.attach(player);
+        LACPlayer.Context c1 = LACPlayerManager.capture(player).get();
+        LACPlayer.Context c2 = LACPlayerManager.capture(player).get();
+
+        // equality is value-based and both contexts are equal because the underlying
+        // captured epoch/cache/world/player/owner all match.
+        assertEquals(c1, c2);
+        assertEquals(c1.hashCode(), c2.hashCode());
+
+        // toString contains field names
+        String str = c1.toString();
+        assertTrue(str.contains("owner="));
+        assertTrue(str.contains("epoch="));
+
+        // equals against null and unrelated types returns false
+        assertNotEquals(c1, null);
+        assertNotEquals(c1, "not a context");
+    }
+
+    @Test
+    void concurrentAttachCreatesSingleWrapper() throws Exception {
+        Player player = newPlayer();
+        final UUID playerUuid = player.getUniqueId();
+        final int workers = 8;
+        final java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(workers);
+        final java.util.concurrent.ConcurrentLinkedQueue<LACPlayer> seen =
+                new java.util.concurrent.ConcurrentLinkedQueue<>();
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(workers);
+        try {
+            for (int i = 0; i < workers; i++) {
+                pool.submit(() -> {
+                    try {
+                        start.await();
+                        LACPlayer wrapper = LACPlayerManager.attach(player);
+                        seen.add(wrapper);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            start.countDown();
+            assertTrue(done.await(10, java.util.concurrent.TimeUnit.SECONDS));
+        } finally {
+            pool.shutdownNow();
+        }
+        LACPlayer registry = LACPlayerManager.find(playerUuid).orElseThrow(AssertionError::new);
+        for (LACPlayer wrapper : seen) {
+            assertSame(registry, wrapper);
+        }
+        assertEquals(1, LACPlayerManager.values().size());
+    }
+
+    @Test
+    void valuesReturnsUnmodifiableSnapshot() {
+        Player player = newPlayer();
+        LACPlayerManager.attach(player);
+        java.util.Collection<LACPlayer> snap = LACPlayerManager.values();
+        assertEquals(1, snap.size());
+        // iterating works
+        int count = 0;
+        for (LACPlayer ignored : snap) {
+            count++;
+        }
+        assertEquals(1, count);
+        // mutating the snapshot throws
+        assertThrows(UnsupportedOperationException.class, () -> snap.clear());
+        assertThrows(UnsupportedOperationException.class, () -> snap.remove(LACPlayerManager.find(player.getUniqueId()).orElseThrow(AssertionError::new)));
+    }
+
     // ---------------------------------------------------------------------
     // Helper to reach the mutable holder behind a Player proxy
     // ---------------------------------------------------------------------

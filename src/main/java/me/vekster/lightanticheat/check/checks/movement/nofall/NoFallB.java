@@ -96,16 +96,18 @@ public class NoFallB extends MovementCheck implements Listener {
             }
         }
 
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("fallEvents", 0);
                 return;
             }
+        }
 
         Location newerLocation = event.getTo();
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++) {
-            Location location = cache.history.onEvent.location.get(HistoryElement.values()[i]);
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            Location location = cache.history.onEvent.location.get(HistoryElement.at(i));
             double vSpeed = distanceVertical(location, newerLocation);
             newerLocation = location;
             if (vSpeed > -0.00001) {

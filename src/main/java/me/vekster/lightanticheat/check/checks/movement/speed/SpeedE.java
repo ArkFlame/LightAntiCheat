@@ -284,16 +284,18 @@ public class SpeedE extends MovementCheck implements Listener {
                 getEffectAmplifier(cache, VerUtil.potions.get("JUMP")) > 2)
             return;
 
-        for (int i = 0; i < HistoryElement.values().length; i++) {
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsFalse)
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsFalse)
                 break;
-            if (HistoryElement.values()[i] == HistoryElement.TENTH)
+            if (element == HistoryElement.TENTH)
                 return;
         }
-        for (int i = 0; i < HistoryElement.values().length; i++) {
-            if (cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsFalse)
+        for (int i = 0; i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onPacket.onGround.get(element).towardsFalse)
                 break;
-            if (HistoryElement.values()[i] == HistoryElement.TENTH)
+            if (element == HistoryElement.TENTH)
                 return;
         }
 

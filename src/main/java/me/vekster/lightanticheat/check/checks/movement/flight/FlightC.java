@@ -102,13 +102,15 @@ public class FlightC extends MovementCheck implements Listener {
             return;
         }
 
-        for (int i = 0; i < 3 && i < HistoryElement.values().length; i++)
-            if (cache.history.onEvent.onGround.get(HistoryElement.values()[i]).towardsTrue ||
-                    cache.history.onPacket.onGround.get(HistoryElement.values()[i]).towardsTrue) {
+        for (int i = 0; i < 3 && i < HistoryElement.count(); i++) {
+            final HistoryElement element = HistoryElement.at(i);
+            if (cache.history.onEvent.onGround.get(element).towardsTrue ||
+                    cache.history.onPacket.onGround.get(element).towardsTrue) {
                 buffer.put("flightTicks", 0);
                 buffer.put("airJump", 0);
                 return;
             }
+        }
 
         if (event.getFrom().getBlockY() > event.getTo().getBlockY() ||
                 event.getFrom().getY() > event.getTo().getY() && getBlockY(event.getTo().getY()) == 0) {
@@ -209,8 +211,8 @@ public class FlightC extends MovementCheck implements Listener {
         Location previousLocation = null;
         Location prePreviousLocation = null;
         boolean legacy = VerIdentifier.getVersion() == LACVersion.V1_8;
-        for (int i = 0; i <= (!legacy ? 7 : 10) && i < HistoryElement.values().length; i++) {
-            HistoryElement element = HistoryElement.values()[i];
+        for (int i = 0; i <= (!legacy ? 7 : 10) && i < HistoryElement.count(); i++) {
+            HistoryElement element = HistoryElement.at(i);
             Location location = history.get(element);
             if (previousLocation == null) {
                 previousLocation = location;
