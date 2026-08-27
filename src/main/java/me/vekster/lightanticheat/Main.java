@@ -51,10 +51,12 @@ import me.vekster.lightanticheat.check.checks.packet.timer.TimerB;
 import me.vekster.lightanticheat.check.checks.player.autobot.AutoBotA;
 import me.vekster.lightanticheat.check.checks.player.skinblinker.SkinBlinkerA;
 import me.vekster.lightanticheat.command.LACCommand;
-import me.vekster.lightanticheat.event.LACEventCaller;
 import me.vekster.lightanticheat.event.bus.LACEventBus;
-import me.vekster.lightanticheat.event.bus.LACEventRegistrar;
+import me.vekster.lightanticheat.event.bus.LACEventSubscriber;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
+import me.vekster.lightanticheat.input.LACBukkitStateBridge;
+import me.vekster.lightanticheat.input.LACInputEngine;
+import me.vekster.lightanticheat.input.model.LACInputMode;
 
 import me.vekster.lightanticheat.listener.invalidping.InvalidPingListener;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
@@ -63,6 +65,7 @@ import me.vekster.lightanticheat.player.LACPlayerListener;
 import me.vekster.lightanticheat.util.api.ApiUtil;
 import me.vekster.lightanticheat.util.config.ConfigManager;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
+import me.vekster.lightanticheat.util.logger.LogType;
 import me.vekster.lightanticheat.util.logger.Logger;
 import me.vekster.lightanticheat.util.npc.ExternalNPCUtil;
 import me.vekster.lightanticheat.util.player.connectionstability.ConnectionStabilityListener;
@@ -74,10 +77,12 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Optional;
+
 public class Main extends JavaPlugin {
 
     private static Main instance;
-    private static LACEventCaller eventCaller;
+    private LACInputEngine inputEngine;
     private static final long BUFFER_DURATION_MILS = 20 * 1000L;
     private static final int PLUGIN_ID = 112053;
     private static final int STATS_ID = 12841;
@@ -88,6 +93,29 @@ public class Main extends JavaPlugin {
         FoliaUtil.loadFoliaUtil();
         ConfigManager.loadConfig();
 
+        Optional<LACInputMode> parsedMode = LACInputMode.parse(ConfigManager.Config.listenerMode);
+        if (!parsedMode.isPresent()) {
+            Logger.logConsole(LogType.ERROR, "(" + getName() + ") Invalid listener-mode: '" + ConfigManager.Config.listenerMode + "'! Accepted values: [packet, nms]. Disabling plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        LACInputMode targetMode = parsedMode.get();
+        if (targetMode == LACInputMode.PACKET) {
+            boolean packetAvailable;
+            try {
+                packetAvailable = (Boolean) Class.forName("me.vekster.lightanticheat.input.provider.packetevents.PacketEventsInputProvider")
+                        .getMethod("isPacketEventsAvailable").invoke(null);
+            } catch (Exception e) {
+                packetAvailable = false;
+            }
+            if (!packetAvailable) {
+                Logger.logConsole(LogType.ERROR, "(" + getName() + ") listener-mode 'packet' requires PacketEvents but it is not available/enabled. Disabling plugin.");
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+        }
+        inputEngine = new LACInputEngine(this);
+
         Buffer.loadBufferCleaner(BUFFER_DURATION_MILS);
         TPSCalculator.loadTPSCalculator();
         Logger.logFile("");
@@ -96,14 +124,10 @@ public class Main extends JavaPlugin {
         LACPlayerListener.loadLACPlayerListener();
         LACPlayerListener lacPlayerListener = new LACPlayerListener();
         registerListener(lacPlayerListener);
-        LACEventRegistrar.register(lacPlayerListener);
 
         ExternalNPCUtil.loadExternalNPCUtil();
 
         registerListener(new ViolationHandler());
-
-        eventCaller = new LACEventCaller();
-        registerListener(eventCaller);
 
         UnloadedChunkListener.handleUnloadedChunks();
         InvalidPingListener.limitMaxPing();
@@ -115,7 +139,6 @@ public class Main extends JavaPlugin {
         ConnectionStabilityListener.loadConnectionCalculator();
         ConnectionStabilityListener connectionStabilityListener = new ConnectionStabilityListener();
         registerListener(connectionStabilityListener);
-        LACEventRegistrar.register(connectionStabilityListener);
 
         PluginCommand antiCheatCommand = getCommand("lightanticheat");
         if (antiCheatCommand != null) {
@@ -188,8 +211,10 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (eventCaller != null)
-            eventCaller.close();
+        if (inputEngine != null) {
+            try { inputEngine.close(); } catch (Exception ignored) {}
+            inputEngine = null;
+        }
         LACEventBus.unregisterAll();
         BlockMaterialCache.clear();
         Updater.shutdownUpdateChecker();
@@ -212,8 +237,19 @@ public class Main extends JavaPlugin {
         return STATS_ID;
     }
 
+    public LACInputEngine getInputEngine() {
+        return inputEngine;
+    }
+
+    public LACBukkitStateBridge getBukkitStateBridge() {
+        return inputEngine != null ? inputEngine.getBridge() : null;
+    }
+
     private void registerListener(Listener listener) {
         getServer().getPluginManager().registerEvents(listener, this);
+        if (listener instanceof LACEventSubscriber) {
+            ((LACEventSubscriber) listener).registerLACEvents();
+        }
     }
 
     private void registerCheckListener(Object object) {

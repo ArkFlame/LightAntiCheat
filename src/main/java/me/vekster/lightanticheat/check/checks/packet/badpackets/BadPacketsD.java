@@ -2,13 +2,15 @@ package me.vekster.lightanticheat.check.checks.packet.badpackets;
 
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.checks.packet.PacketCheck;
-import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
-import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.packetreceive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -19,9 +21,13 @@ public class BadPacketsD extends PacketCheck implements Listener {
         super(CheckName.BADPACKETS_D);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, this, "onAsyncPacketReceive", event -> onAsyncPacketReceive((LACAsyncPacketReceiveEvent) event));
+    }
+
     public void onAsyncPacketReceive(LACAsyncPacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.SET_CREATIVE_SLOT)
+        if (event.getPacketType() != LACPacketType.SET_CREATIVE_SLOT)
             return;
 
         Player player = event.getPlayer();

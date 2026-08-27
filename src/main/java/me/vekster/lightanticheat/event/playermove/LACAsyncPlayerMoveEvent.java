@@ -34,6 +34,80 @@ public class LACAsyncPlayerMoveEvent extends Event implements Cancellable, LACPl
     private final BlockCache fromBlockCache;
     private final BlockCache toBlockCache;
 
+    public LACAsyncPlayerMoveEvent(LACPlayer.Context context,
+                                     Location from,
+                                     Location to,
+                                     LACMovementChange movementChange,
+                                     boolean isPlayerFlying,
+                                     boolean isPlayerInsideVehicle,
+                                     boolean isPlayerGliding,
+                                     boolean isPlayerRiptiding,
+                                     BlockCache fromBlockCache,
+                                     BlockCache toBlockCache) {
+        super(!FoliaUtil.isFolia());
+        this.context = context;
+        this.from = from != null ? from.clone() : null;
+        this.to = to != null ? to.clone() : null;
+        this.movementChange = movementChange != null ? movementChange : LACMovementChange.of(from, to);
+        this.fromBlockCache = fromBlockCache != null ? fromBlockCache : BlockCache.empty();
+        this.toBlockCache = toBlockCache != null ? toBlockCache : BlockCache.empty();
+        this.isPlayerFlying = isPlayerFlying;
+        this.isPlayerInsideVehicle = isPlayerInsideVehicle;
+        this.isPlayerGliding = isPlayerGliding;
+        this.isPlayerRiptiding = isPlayerRiptiding;
+        if (toBlockCache != null && toBlockCache.isReadable()) {
+            this.isPlayerClimbing = toBlockCache.playerClimbing;
+            this.isPlayerInWater = toBlockCache.playerInWater;
+        } else {
+            this.isPlayerClimbing = false;
+            this.isPlayerInWater = false;
+        }
+    }
+
+    public static Optional<LACAsyncPlayerMoveEvent> createPacketMode(LACPlayer.Context context,
+                                                                     Location from,
+                                                                     Location to) {
+        if (context == null || !context.isCurrent()) return Optional.empty();
+        if (from == null || to == null || from.getWorld() == null || to.getWorld() == null) return Optional.empty();
+        if (!from.getWorld().getUID().equals(context.worldId()) || !to.getWorld().getUID().equals(context.worldId())) return Optional.empty();
+        if (!from.getWorld().getUID().equals(to.getWorld().getUID())) return Optional.empty();
+        LACMovementChange change = LACMovementChange.of(from, to);
+        boolean sameWorld = sameWorld(from, to);
+        BlockCache existingFromCache = context.cache().fromBlockCache;
+        BlockCache fromCache = (sameWorld && existingFromCache != null && existingFromCache.matches(from))
+                ? existingFromCache : BlockCache.empty();
+        boolean canReadTo = sameWorld
+                && change.isPositionChanged()
+                && context.isCurrent()
+                && (!FoliaUtil.isFolia()
+                    || (FoliaUtil.isOwnedByCurrentRegion(context.player())
+                        && FoliaUtil.isOwnedByCurrentRegion(to, 1)));
+        BlockCache toCache;
+        boolean climbing;
+        boolean inWater;
+        if (canReadTo) {
+            toCache = BlockCache.capture(context, to);
+            climbing = toCache.playerClimbing;
+            inWater = toCache.playerInWater;
+        } else {
+            toCache = fromCache;
+            climbing = false;
+            inWater = false;
+        }
+        if (sameWorld && toCache.isReadable()) {
+            context.cache().fromBlockCache = toCache;
+        } else if (!sameWorld) {
+            context.cache().fromBlockCache = BlockCache.empty();
+        }
+        boolean isFlying = context.player().isFlying();
+        boolean isInsideVehicle = context.player().isInsideVehicle();
+        boolean isGliding = context.owner().isGliding();
+        boolean isRiptiding = context.owner().isRiptiding();
+        LACAsyncPlayerMoveEvent evt = new LACAsyncPlayerMoveEvent(context, from, to, change,
+                isFlying, isInsideVehicle, isGliding, isRiptiding, fromCache, toCache);
+        return Optional.of(evt);
+    }
+
     public LACAsyncPlayerMoveEvent(LACPlayerMoveEvent event) {
         super(!FoliaUtil.isFolia());
 

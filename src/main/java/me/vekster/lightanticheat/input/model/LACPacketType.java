@@ -1,6 +1,6 @@
-package me.vekster.lightanticheat.event.packetrecive.packettype;
+package me.vekster.lightanticheat.input.model;
 
-public enum PacketType {
+public enum LACPacketType {
     FLYING,
     ARM_ANIMATION,
     BLOCK_DIG,

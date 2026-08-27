@@ -4,11 +4,13 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.packet.PacketCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -19,9 +21,18 @@ public class TimerB extends PacketCheck implements Listener {
         super(CheckName.TIMER_B);
     }
 
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementA", event -> onAsyncMovementA((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementB", event -> onAsyncMovementB((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementC", event -> onAsyncMovementC((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementD", event -> onAsyncMovementD((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementE", event -> onAsyncMovementE((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovementF", event -> onAsyncMovementF((LACAsyncPlayerMoveEvent) event));
+    }
+
     //      Long interval:
 
-    @EventHandler
     public void onAsyncMovementA(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -42,7 +53,6 @@ public class TimerB extends PacketCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void onAsyncMovementB(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -63,7 +73,6 @@ public class TimerB extends PacketCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void onAsyncMovementC(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -84,7 +93,6 @@ public class TimerB extends PacketCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void onAsyncMovementD(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -107,7 +115,6 @@ public class TimerB extends PacketCheck implements Listener {
 
     //      Short interval:
 
-    @EventHandler
     public void onAsyncMovementE(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -128,7 +135,6 @@ public class TimerB extends PacketCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void onAsyncMovementF(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

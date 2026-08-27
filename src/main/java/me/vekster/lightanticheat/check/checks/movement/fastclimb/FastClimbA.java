@@ -17,11 +17,14 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.HashSet;
 import java.util.Set;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 
 /**
  * Vertical speed while climbing
@@ -29,6 +32,11 @@ import java.util.Set;
 public class FastClimbA extends MovementCheck implements Listener {
     public FastClimbA() {
         super(CheckName.FASTCLIMB_A);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
     }
 
     @Override
@@ -51,7 +59,6 @@ public class FastClimbA extends MovementCheck implements Listener {
                 time - cache.lastFlight > 750;
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;

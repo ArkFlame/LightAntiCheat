@@ -4,6 +4,10 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -19,7 +23,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.Set;
@@ -30,6 +33,12 @@ import java.util.Set;
 public class BoatA extends MovementCheck implements Listener {
     public BoatA() {
         super(CheckName.BOAT_A);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.NORMAL, this, "boatFlight", LACMovementRequirement.POSITION, event -> boatFlight((LACPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.NORMAL, this, "boatSpeed", LACMovementRequirement.POSITION, event -> boatSpeed((LACPlayerMoveEvent) event));
     }
 
     @Override
@@ -53,7 +62,6 @@ public class BoatA extends MovementCheck implements Listener {
                 time - cache.lastFlight > 750;
     }
 
-    @EventHandler
     public void boatFlight(LACPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -179,7 +187,6 @@ public class BoatA extends MovementCheck implements Listener {
         return type == Material.SLIME_BLOCK || type == VerUtil.material.get("HONEY_BLOCK");
     }
 
-    @EventHandler
     public void boatSpeed(LACPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

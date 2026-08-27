@@ -41,4 +41,31 @@ public final class LACMovementChange {
                 pitchChanged
         );
     }
+
+    public static LACMovementChange of(final me.vekster.lightanticheat.input.model.LACLocation from,
+                                       final me.vekster.lightanticheat.input.model.LACLocation to) {
+        if (from == null || to == null) {
+            return new LACMovementChange(false, false, false, false, false, false);
+        }
+        if (!from.getWorldId().equals(to.getWorldId())) {
+            return new LACMovementChange(false, false, false, false, false, false);
+        }
+        final boolean xChanged = Double.compare(from.getX(), to.getX()) != 0;
+        final boolean yChanged = Double.compare(from.getY(), to.getY()) != 0;
+        final boolean zChanged = Double.compare(from.getZ(), to.getZ()) != 0;
+        final boolean yawChanged = Float.compare(from.getYaw(), to.getYaw()) != 0;
+        final boolean pitchChanged = Float.compare(from.getPitch(), to.getPitch()) != 0;
+        final boolean horizontalChanged = xChanged || zChanged;
+        final boolean verticalChanged = yChanged;
+        final boolean positionChanged = horizontalChanged || verticalChanged;
+        final boolean rotationChanged = yawChanged || pitchChanged;
+        return new LACMovementChange(
+                positionChanged,
+                horizontalChanged,
+                verticalChanged,
+                rotationChanged,
+                yawChanged,
+                pitchChanged
+        );
+    }
 }

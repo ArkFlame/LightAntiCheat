@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.ghostbreak;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerbreakblock.LACPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
@@ -10,7 +13,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.HashSet;
@@ -35,7 +37,11 @@ public class GhostBreakA extends InteractionCheck implements Listener {
         BLOCK_FACES.add(BlockFace.EAST);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_BREAK_BLOCK, LACEventPriority.NORMAL, this, "onBlockBreak", event -> onBlockBreak((LACPlayerBreakBlockEvent) event));
+    }
+
     public void onBlockBreak(LACPlayerBreakBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();

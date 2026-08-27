@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.fastbreak;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerbreakblock.LACPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -83,7 +86,13 @@ public class FastBreakA extends InteractionCheck implements Listener {
         super(CheckName.FASTBREAK_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_BREAK_BLOCK, LACEventPriority.NORMAL, this, "onBlockBreak", event -> onBlockBreak((LACPlayerBreakBlockEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_BREAK_BLOCK, LACEventPriority.LOW, this, "beforeBlockBreak", event -> beforeBlockBreak((LACPlayerBreakBlockEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "onMovement", event -> onMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void onBlockBreak(LACPlayerBreakBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();
@@ -199,7 +208,6 @@ public class FastBreakA extends InteractionCheck implements Listener {
         buffer.put("lastInteraction", System.currentTimeMillis());
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeBlockBreak(LACPlayerBreakBlockEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -213,7 +221,6 @@ public class FastBreakA extends InteractionCheck implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void onMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

@@ -3,6 +3,10 @@ package me.vekster.lightanticheat.check.checks.player.autobot;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.player.PlayerCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -17,7 +21,6 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -28,7 +31,12 @@ public class AutoBotA extends PlayerCheck implements Listener {
         super(CheckName.AUTOBOT_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onHeadRotation", LACMovementRequirement.ROTATION, event -> onHeadRotation((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onMovement", LACMovementRequirement.POSITION_AND_ROTATION, event -> onMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void onHeadRotation(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -98,7 +106,6 @@ public class AutoBotA extends PlayerCheck implements Listener {
         return change % (float) 90 == 0;
     }
 
-    @EventHandler
     public void onMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;

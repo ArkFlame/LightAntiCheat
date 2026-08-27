@@ -3,15 +3,18 @@ package me.vekster.lightanticheat.check.checks.packet.timer;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.packet.PacketCheck;
-import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
-import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
+import me.vekster.lightanticheat.event.packetreceive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.version.identifier.LACVersion;
 import me.vekster.lightanticheat.version.identifier.VerIdentifier;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -22,12 +25,17 @@ public class TimerA extends PacketCheck implements Listener {
         super(CheckName.TIMER_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, this, "onAsyncPacketReceive", event -> onAsyncPacketReceive((LACAsyncPacketReceiveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void onAsyncPacketReceive(LACAsyncPacketReceiveEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();
 
-        if (event.getPacketType() != PacketType.FLYING)
+        if (event.getPacketType() != LACPacketType.FLYING)
             return;
 
         if (!isCheckAllowed(player, lacPlayer, true))
@@ -84,7 +92,6 @@ public class TimerA extends PacketCheck implements Listener {
         }
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         if (distance(event.getFrom(), event.getTo()) == 0)
             return;

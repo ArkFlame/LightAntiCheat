@@ -1,5 +1,7 @@
 package me.vekster.lightanticheat.player;
 
+import me.vekster.lightanticheat.input.model.LACLocation;
+import me.vekster.lightanticheat.input.model.LACPlayerSession;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.player.cooldown.PlayerCooldown;
 import me.vekster.lightanticheat.player.violation.PlayerViolations;
@@ -38,6 +40,8 @@ public class LACPlayer extends VerPlayer {
     final AtomicReference<LACPlayer.Context> queuedStateRefresh = new AtomicReference<>();
     volatile UUID worldId;
     volatile boolean active;
+    volatile LACLocation lastKnownLocation;
+    volatile LACLocation seedLocation;
 
     public static final class Context {
         private final LACPlayer owner;
@@ -131,6 +135,9 @@ public class LACPlayer extends VerPlayer {
         joinTime = System.currentTimeMillis();
         leaveTime = 0;
         queuedStateRefresh.set(null);
+        LACLocation lacLocation = new LACLocation(worldId, location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        seedLocation = lacLocation;
+        lastKnownLocation = lacLocation;
         active = true;
     }
 
@@ -150,6 +157,9 @@ public class LACPlayer extends VerPlayer {
         this.cache = new PlayerCache(location, this.alerts);
         epoch.incrementAndGet();
         queuedStateRefresh.set(null);
+        LACLocation lacLocation = new LACLocation(worldId, location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        seedLocation = lacLocation;
+        lastKnownLocation = lacLocation;
         active = true;
     }
 
@@ -191,6 +201,52 @@ public class LACPlayer extends VerPlayer {
 
     void finishStateRefresh(LACPlayer.Context context) {
         queuedStateRefresh.compareAndSet(context, null);
+    }
+
+    public Optional<LACPlayerSession> captureSession() {
+        if (!active) return Optional.empty();
+        UUID wid = worldId;
+        long e = epoch.get();
+        if (wid == null || e < 1L) return Optional.empty();
+        return Optional.of(new LACPlayerSession(uuid, wid, e));
+    }
+
+    public boolean matchesSession(LACPlayerSession session) {
+        if (session == null) return false;
+        if (!uuid.equals(session.getPlayerId())) return false;
+        if (!active) return false;
+        long e = epoch.get();
+        UUID wid = worldId;
+        return e == session.getPlayerEpoch() && wid != null && wid.equals(session.getWorldId());
+    }
+
+    public Optional<LACPlayer.Context> captureCurrent(LACPlayerSession session) {
+        if (session == null) return Optional.empty();
+        if (!matchesSession(session)) return Optional.empty();
+        Player bound = boundPlayer();
+        PlayerCache c = cache;
+        UUID wid = worldId;
+        long e = epoch.get();
+        if (c == null || wid == null || e < 1L) return Optional.empty();
+        LACPlayer.Context context = new LACPlayer.Context(this, bound, c, wid, e);
+        if (!context.isCurrent()) return Optional.empty();
+        return Optional.of(context);
+    }
+
+    public LACLocation getLastKnownLocation() {
+        return lastKnownLocation;
+    }
+
+    public void setLastKnownLocation(LACLocation location) {
+        lastKnownLocation = location;
+    }
+
+    public LACLocation getSeedLocation() {
+        return seedLocation;
+    }
+
+    public Player peekPlayer() {
+        return boundPlayer();
     }
 
 }

@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.combat.reach;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerattack.LACPlayerAttackEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -15,7 +18,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -26,7 +28,11 @@ public class ReachB extends CombatCheck implements Listener {
         super(CheckName.REACH_B);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_ATTACK, LACEventPriority.NORMAL, this, "onHit", event -> onHit((LACPlayerAttackEvent) event));
+    }
+
     public void onHit(LACPlayerAttackEvent event) {
         if (!event.isEntityAttackCause())
             return;

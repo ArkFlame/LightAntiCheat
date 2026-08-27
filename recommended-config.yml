@@ -1,4 +1,5 @@
 enabled: true
+listener-mode: "packet"
 
 ## Customizable plugin messages
 messages:

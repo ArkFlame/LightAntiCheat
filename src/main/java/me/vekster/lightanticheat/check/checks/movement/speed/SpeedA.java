@@ -3,6 +3,10 @@ package me.vekster.lightanticheat.check.checks.movement.speed;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -63,7 +67,14 @@ public class SpeedA extends MovementCheck implements Listener {
                 time - cache.lastWindBurst > 500 && time - cache.lastWindBurstNotVanilla > 1000;
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "totalHorizontal", LACMovementRequirement.POSITION, event -> totalHorizontal((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "beforeMovement", LACMovementRequirement.POSITION, event -> beforeMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "airHorizontal", LACMovementRequirement.POSITION, event -> airHorizontal((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "beforeAirMovement", LACMovementRequirement.POSITION, event -> beforeAirMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void totalHorizontal(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -192,7 +203,6 @@ public class SpeedA extends MovementCheck implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -227,7 +237,6 @@ public class SpeedA extends MovementCheck implements Listener {
         buffer.put("flags", 0);
     }
 
-    @EventHandler
     public void airHorizontal(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -399,7 +408,6 @@ public class SpeedA extends MovementCheck implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeAirMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

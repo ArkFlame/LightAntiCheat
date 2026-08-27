@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.scaffold;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playermove.blockcache.BlockMaterialCache;
 import me.vekster.lightanticheat.event.playerplaceblock.LACAsyncPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -14,7 +17,6 @@ import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
@@ -26,7 +28,11 @@ public class ScaffoldB extends InteractionCheck implements Listener {
         super(CheckName.SCAFFOLD_B);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onAsyncBlockPlace", event -> onAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
+    }
+
     public void onAsyncBlockPlace(LACAsyncPlayerPlaceBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();

@@ -13,14 +13,16 @@ import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 
 /**
  * Fast takeoff without a firework
@@ -28,6 +30,12 @@ import java.util.Set;
 public class ElytraC extends MovementCheck implements Listener {
     public ElytraC() {
         super(CheckName.ELYTRA_C);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "beforeMovement", LACMovementRequirement.POSITION, event -> beforeMovement((LACAsyncPlayerMoveEvent) event));
     }
 
     private static final double[] TICK_SPEEDS = new double[41];
@@ -68,7 +76,6 @@ public class ElytraC extends MovementCheck implements Listener {
                 time - cache.lastFlight > 750;
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -146,7 +153,6 @@ public class ElytraC extends MovementCheck implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

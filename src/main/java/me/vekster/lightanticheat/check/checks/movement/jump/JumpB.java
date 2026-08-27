@@ -26,6 +26,10 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.HashSet;
 import java.util.Set;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 
 /**
  * Jump height
@@ -33,6 +37,11 @@ import java.util.Set;
 public class JumpB extends MovementCheck implements Listener {
     public JumpB() {
         super(CheckName.JUMP_B);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
     }
 
     @Override
@@ -59,7 +68,6 @@ public class JumpB extends MovementCheck implements Listener {
                 time - cache.lastWindBurst > 1500 && time - cache.lastWindBurstNotVanilla > 4000;
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         if (FoliaUtil.isFolia())
             return;

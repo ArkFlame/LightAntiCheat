@@ -23,6 +23,7 @@ public class ConfigManager extends PlaceholderConvertor {
 
     public static class Config {
         public static boolean enabled;
+        public static String listenerMode;
 
         public static class Messages {
             public static String prefix;
@@ -253,6 +254,34 @@ public class ConfigManager extends PlaceholderConvertor {
         Main instance = Main.getInstance();
         instance.reloadConfig();
         loadConfig();
+        // Reconfigure input engine before check re-registration (transactional)
+        try {
+            me.vekster.lightanticheat.input.model.LACInputMode target = null;
+            java.util.Optional<me.vekster.lightanticheat.input.model.LACInputMode> parsed =
+                    me.vekster.lightanticheat.input.model.LACInputMode.parse(Config.listenerMode);
+            if (parsed.isPresent()) {
+                target = parsed.get();
+                me.vekster.lightanticheat.input.LACInputEngine engine = instance.getInputEngine();
+                if (engine != null) {
+                    me.vekster.lightanticheat.input.model.LACInputMode before = engine.getActiveMode();
+                    if (target == before) {
+                        // same-mode no-op
+                    } else {
+                        me.vekster.lightanticheat.input.model.LACInputMode beforeReconf = before;
+                        engine.reconfigure(target);
+                        me.vekster.lightanticheat.input.model.LACInputMode after = engine.getActiveMode();
+                        if (after != target) {
+                            // failed target keeps prior provider
+                            Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Failed to reconfigure listener-mode to '" + Config.listenerMode + "': provider unavailable. Keeping previous mode '" + beforeReconf + "'.");
+                        }
+                    }
+                }
+            } else {
+                Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Invalid listener-mode: '" + Config.listenerMode + "'! Accepted values: [packet, nms]. Keeping previous mode.");
+            }
+        } catch (Exception e) {
+            Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Failed to reconfigure input mode: " + e.getMessage());
+        }
         for (CheckName checkName : CheckName.values()) {
             CheckSetting checkSetting = Check.getCheckSetting(checkName);
             if (checkSetting == null) {

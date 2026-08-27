@@ -1,7 +1,6 @@
 package me.vekster.lightanticheat.version;
 
 import me.vekster.lightanticheat.Main;
-import me.vekster.lightanticheat.event.LACEventCaller;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import me.vekster.lightanticheat.version.identifier.LACVersion;
 import me.vekster.lightanticheat.version.identifier.VerIdentifier;
@@ -60,22 +59,22 @@ public class VerUtil {
                 multiVersion = new V1_8(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -83,22 +82,22 @@ public class VerUtil {
                 multiVersion = new V1_9(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -106,22 +105,22 @@ public class VerUtil {
                 multiVersion = new V1_10(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -129,22 +128,22 @@ public class VerUtil {
                 multiVersion = new V1_11(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -152,22 +151,22 @@ public class VerUtil {
                 multiVersion = new V1_12(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -175,22 +174,22 @@ public class VerUtil {
                 multiVersion = new V1_13(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -198,22 +197,22 @@ public class VerUtil {
                 multiVersion = new V1_14(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -221,22 +220,22 @@ public class VerUtil {
                 multiVersion = new V1_15(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -244,22 +243,22 @@ public class VerUtil {
                 multiVersion = new V1_16(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -267,22 +266,22 @@ public class VerUtil {
                 multiVersion = new V1_17(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -290,22 +289,22 @@ public class VerUtil {
                 multiVersion = new V1_18(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -313,22 +312,22 @@ public class VerUtil {
                 multiVersion = new V1_19(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;
@@ -337,22 +336,22 @@ public class VerUtil {
                 multiVersion = new V1_20(Main.getInstance()) {
                     @Override
                     public void onBlockPlace(BlockPlaceEvent event) {
-                        LACEventCaller.callBlockPlaceEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockPlace(event);
                     }
 
                     @Override
                     public void onBlockBreak(BlockBreakEvent event) {
-                        LACEventCaller.callBlockBreakEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onBlockBreak(event);
                     }
 
                     @Override
                     public void onMovement(PlayerMoveEvent event) {
-                        LACEventCaller.callMovementEvents(event);
+                        Main.getInstance().getBukkitStateBridge().onMovement(event);
                     }
 
                     @Override
                     public void onEntityDamage(EntityDamageByEntityEvent event) {
-                        LACEventCaller.callEntityDamageEvent(event);
+                        Main.getInstance().getBukkitStateBridge().onEntityDamage(event);
                     }
                 };
                 break;

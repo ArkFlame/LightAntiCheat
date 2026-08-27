@@ -1,5 +1,6 @@
 package me.vekster.lightanticheat.player;
 
+import me.vekster.lightanticheat.input.model.LACPlayerSession;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.Player;
 
@@ -111,6 +112,33 @@ public final class LACPlayerManager {
             context.owner().finishStateRefresh(context);
             throw exception;
         }
+    }
+
+    public static Optional<LACPlayerSession> captureSession(UUID playerId) {
+        if (playerId == null) return Optional.empty();
+        Optional<LACPlayer> opt = find(playerId);
+        if (!opt.isPresent()) return Optional.empty();
+        return opt.get().captureSession();
+    }
+
+    public static void execute(LACPlayerSession session, boolean force, Consumer<LACPlayer.Context> action) {
+        if (session == null || action == null) return;
+        Optional<LACPlayer> opt = find(session.getPlayerId());
+        if (!opt.isPresent()) return;
+        LACPlayer lacPlayer = opt.get();
+        if (!lacPlayer.matchesSession(session)) return;
+        Player player = lacPlayer.peekPlayer();
+        Scheduler.entityThread(player, force, new Runnable() {
+            @Override
+            public void run() {
+                if (!lacPlayer.matchesSession(session)) return;
+                Optional<LACPlayer.Context> ctxOpt = lacPlayer.captureCurrent(session);
+                if (!ctxOpt.isPresent()) return;
+                LACPlayer.Context context = ctxOpt.get();
+                if (!context.isCurrent()) return;
+                action.accept(context);
+            }
+        });
     }
 
 }

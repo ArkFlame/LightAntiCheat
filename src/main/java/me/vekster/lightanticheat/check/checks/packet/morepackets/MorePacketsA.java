@@ -3,11 +3,13 @@ package me.vekster.lightanticheat.check.checks.packet.morepackets;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.packet.PacketCheck;
-import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.packetreceive.LACAsyncPacketReceiveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -21,9 +23,14 @@ public class MorePacketsA extends PacketCheck implements Listener {
     private static final int LONG_LIMIT = (int) Math.ceil(20 * 1.6 * 5.5);
     private static final int SHORT_LIMIT = (int) Math.ceil(20 * 0.8 * 4.5);
 
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, this, "onAsyncPacketReceiveA", event -> onAsyncPacketReceiveA((LACAsyncPacketReceiveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, this, "onAsyncPacketReceiveB", event -> onAsyncPacketReceiveB((LACAsyncPacketReceiveEvent) event));
+    }
+
     //      Long interval:
 
-    @EventHandler
     public void onAsyncPacketReceiveA(LACAsyncPacketReceiveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -46,7 +53,6 @@ public class MorePacketsA extends PacketCheck implements Listener {
 
     //      Short interval:
 
-    @EventHandler
     public void onAsyncPacketReceiveB(LACAsyncPacketReceiveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

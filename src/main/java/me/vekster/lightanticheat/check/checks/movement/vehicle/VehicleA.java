@@ -3,8 +3,11 @@ package me.vekster.lightanticheat.check.checks.movement.vehicle;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
-import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
-import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.packetreceive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
 import me.vekster.lightanticheat.util.detection.LeanTowards;
@@ -15,7 +18,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -47,9 +49,13 @@ public class VehicleA extends MovementCheck implements Listener {
                 time - cache.lastFlight > 750;
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.NORMAL, this, "vehicleSpeedAndFlight", event -> vehicleSpeedAndFlight((LACAsyncPacketReceiveEvent) event));
+    }
+
     public void vehicleSpeedAndFlight(LACAsyncPacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.STEER_VEHICLE)
+        if (event.getPacketType() != LACPacketType.STEER_VEHICLE)
             return;
 
         LACPlayer lacPlayer = event.getLacPlayer();

@@ -3,6 +3,10 @@ package me.vekster.lightanticheat.check.checks.combat.killaura;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -12,7 +16,6 @@ import me.vekster.lightanticheat.player.cache.history.PlayerCacheHistory;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -24,7 +27,12 @@ public class KillAuraA extends CombatCheck implements Listener {
         super(CheckName.KILLAURA_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, this, "onAsyncHit", event -> onAsyncHit((LACAsyncPlayerAttackEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.ROTATION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void onAsyncHit(LACAsyncPlayerAttackEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -46,7 +54,6 @@ public class KillAuraA extends CombatCheck implements Listener {
         buffer.put("listen", System.currentTimeMillis());
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         Player player = event.getPlayer();
         Buffer buffer = getBuffer(player, true);

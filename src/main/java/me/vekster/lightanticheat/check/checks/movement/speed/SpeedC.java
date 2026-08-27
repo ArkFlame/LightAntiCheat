@@ -5,6 +5,10 @@ import com.kireiko.utils.math.client.MoveEngine;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -65,7 +69,12 @@ public class SpeedC extends MovementCheck implements Listener {
                 time - cache.lastWindBurst > 500 && time - cache.lastWindBurstNotVanilla > 1000;
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "beforeMovement", LACMovementRequirement.POSITION, event -> beforeMovement((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         if (ValhallaMMOHook.isPluginInstalled()) return;
         Player player = event.getPlayer();
@@ -175,7 +184,6 @@ public class SpeedC extends MovementCheck implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeMovement(LACAsyncPlayerMoveEvent event) {
         if (ValhallaMMOHook.isPluginInstalled()) return;
         LACPlayer lacPlayer = event.getLacPlayer();

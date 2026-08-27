@@ -1,5 +1,9 @@
 package me.vekster.lightanticheat.util.player.connectionstability;
 
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventSubscriber;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Bukkit;
@@ -11,16 +15,20 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ConnectionStabilityListener implements Listener {
+public class ConnectionStabilityListener implements Listener, LACEventSubscriber {
 
     private static final Map<UUID, List<Integer>> PLAYERS = new ConcurrentHashMap<>();
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+    }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         PLAYERS.put(event.getPlayer().getUniqueId(), new LinkedList<>(Arrays.asList(0, 0, 0, 0)));
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
         if (!PLAYERS.containsKey(uuid))

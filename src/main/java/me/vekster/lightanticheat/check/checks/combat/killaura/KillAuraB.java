@@ -4,6 +4,9 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.LACPlayerManager;
@@ -17,7 +20,6 @@ import me.vekster.lightanticheat.version.VerUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.util.Vector;
 
@@ -29,7 +31,11 @@ public class KillAuraB extends CombatCheck implements Listener {
         super(CheckName.KILLAURA_B);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, this, "onAsyncHit", event -> onAsyncHit((LACAsyncPlayerAttackEvent) event));
+    }
+
     public void onAsyncHit(LACAsyncPlayerAttackEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();

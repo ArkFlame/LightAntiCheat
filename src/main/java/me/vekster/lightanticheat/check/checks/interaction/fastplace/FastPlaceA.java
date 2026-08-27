@@ -3,11 +3,13 @@ package me.vekster.lightanticheat.check.checks.interaction.fastplace;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerplaceblock.LACAsyncPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -18,7 +20,12 @@ public class FastPlaceA extends InteractionCheck implements Listener {
         super(CheckName.FASTPLACE_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onAsyncBlockPlace", event -> onAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onBlockPlace", event -> onBlockPlace((LACPlayerPlaceBlockEvent) event));
+    }
+
     public void onAsyncBlockPlace(LACAsyncPlayerPlaceBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();
@@ -46,7 +53,6 @@ public class FastPlaceA extends InteractionCheck implements Listener {
         buffer.put("asyncFlag", true);
     }
 
-    @EventHandler
     public void onBlockPlace(LACPlayerPlaceBlockEvent event) {
         Player player = event.getPlayer();
         Buffer buffer = getBuffer(player, true);

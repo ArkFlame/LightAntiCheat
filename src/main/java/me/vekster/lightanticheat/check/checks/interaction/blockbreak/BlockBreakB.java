@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.blockbreak;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerbreakblock.LACAsyncPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -16,7 +19,6 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -27,7 +29,11 @@ public class BlockBreakB extends InteractionCheck implements Listener {
         super(CheckName.BLOCKBREAK_B);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_BREAK_BLOCK, LACEventPriority.NORMAL, this, "onAsyncBlockBreak", event -> onAsyncBlockBreak((LACAsyncPlayerBreakBlockEvent) event));
+    }
+
     public void onAsyncBlockBreak(LACAsyncPlayerBreakBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();

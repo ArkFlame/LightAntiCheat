@@ -20,12 +20,14 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Set;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 
 /**
  * Movement trajectory
@@ -34,6 +36,13 @@ public class FlightC extends MovementCheck implements Listener {
 
     public FlightC() {
         super(CheckName.FLIGHT_C);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "beforeMovement", LACMovementRequirement.POSITION, event -> beforeMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "scaffoldAsyncBlockPlace", event -> scaffoldAsyncBlockPlace((LACAsyncPlayerPlaceBlockEvent) event));
     }
 
     @Override
@@ -62,7 +71,6 @@ public class FlightC extends MovementCheck implements Listener {
                 time - cache.lastWindBurst > 1500 && time - cache.lastWindBurstNotVanilla > 4000;
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -233,7 +241,6 @@ public class FlightC extends MovementCheck implements Listener {
         return false;
     }
 
-    @EventHandler(priority = EventPriority.LOW)
     public void beforeMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Player player = event.getPlayer();
@@ -250,7 +257,6 @@ public class FlightC extends MovementCheck implements Listener {
         }
     }
 
-    @EventHandler
     public void scaffoldAsyncBlockPlace(LACAsyncPlayerPlaceBlockEvent event) {
         if (isActuallyPassable(event.getBlock()))
             return;

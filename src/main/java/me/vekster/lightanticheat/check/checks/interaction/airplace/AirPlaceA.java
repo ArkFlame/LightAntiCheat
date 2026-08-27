@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.airplace;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.hook.plugin.simplehook.EnchantsSquaredHook;
@@ -11,8 +14,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 import java.util.HashSet;
@@ -37,7 +38,12 @@ public class AirPlaceA extends InteractionCheck implements Listener {
         BLOCK_FACES.add(BlockFace.EAST);
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_PLACE_BLOCK, LACEventPriority.LOW, this, "beforeBlockPlace", event -> beforeBlockPlace((LACPlayerPlaceBlockEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onBlockPlace", event -> onBlockPlace((LACPlayerPlaceBlockEvent) event));
+    }
+
     public void beforeBlockPlace(LACPlayerPlaceBlockEvent event) {
         Material type = event.getBlockAgainst().getType();
         if (type != Material.AIR && type != Material.WATER && type != Material.LAVA)
@@ -61,7 +67,6 @@ public class AirPlaceA extends InteractionCheck implements Listener {
         }
     }
 
-    @EventHandler
     public void onBlockPlace(LACPlayerPlaceBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = event.getLacPlayer();

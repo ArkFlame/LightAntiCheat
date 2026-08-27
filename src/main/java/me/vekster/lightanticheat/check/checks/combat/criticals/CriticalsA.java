@@ -4,6 +4,9 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.event.playerattack.LACPlayerAttackEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -18,7 +21,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
@@ -30,7 +32,12 @@ public class CriticalsA extends CombatCheck implements Listener {
         super(CheckName.CRITICALS_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.PLAYER_ATTACK, LACEventPriority.NORMAL, this, "onHit", event -> onHit((LACPlayerAttackEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, this, "onAsyncHit", event -> onAsyncHit((LACAsyncPlayerAttackEvent) event));
+    }
+
     public void onHit(LACPlayerAttackEvent event) {
         if (!event.isEntityAttackCause())
             return;
@@ -93,7 +100,6 @@ public class CriticalsA extends CombatCheck implements Listener {
         callViolationEvent(player, lacPlayer, event.getEvent());
     }
 
-    @EventHandler
     public void onAsyncHit(LACAsyncPlayerAttackEvent event) {
         if (event.getEntityId() == 0)
             return;

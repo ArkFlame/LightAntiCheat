@@ -4,6 +4,9 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.combat.CombatCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerattack.LACAsyncPlayerAttackEvent;
 import me.vekster.lightanticheat.event.playerattack.LACPlayerAttackEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -11,7 +14,6 @@ import me.vekster.lightanticheat.util.hook.plugin.FloodgateHook;
 import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -24,7 +26,14 @@ public class KillAuraD extends CombatCheck implements Listener {
         super(CheckName.KILLAURA_D);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, this, "multiAuraAsync", event -> multiAuraAsync((LACAsyncPlayerAttackEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_ATTACK, LACEventPriority.NORMAL, this, "multiAura", event -> multiAura((LACPlayerAttackEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_ATTACK, LACEventPriority.NORMAL, this, "shieldAsync", event -> shieldAsync((LACAsyncPlayerAttackEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_ATTACK, LACEventPriority.NORMAL, this, "shield", event -> shield((LACPlayerAttackEvent) event));
+    }
+
     public void multiAuraAsync(LACAsyncPlayerAttackEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         Buffer buffer = getBuffer(event.getPlayer(), true);
@@ -38,7 +47,6 @@ public class KillAuraD extends CombatCheck implements Listener {
         buffer.put("lastAsyncFlag", System.currentTimeMillis());
     }
 
-    @EventHandler
     public void multiAura(LACPlayerAttackEvent event) {
         Player player = event.getPlayer();
         Buffer buffer = getBuffer(player, true);
@@ -76,7 +84,6 @@ public class KillAuraD extends CombatCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void shieldAsync(LACAsyncPlayerAttackEvent event) {
         Player player = event.getPlayer();
         if (!player.isBlocking() && !player.isSleeping() && !player.isDead())
@@ -86,7 +93,6 @@ public class KillAuraD extends CombatCheck implements Listener {
         buffer.put("lastShieldAsyncFlag", System.currentTimeMillis());
     }
 
-    @EventHandler
     public void shield(LACPlayerAttackEvent event) {
         Player player = event.getPlayer();
         Buffer buffer = getBuffer(player, true);

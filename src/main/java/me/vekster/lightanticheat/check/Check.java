@@ -4,7 +4,7 @@ import me.vekster.lightanticheat.Main;
 import me.vekster.lightanticheat.api.event.LACViolationEvent;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.event.bus.LACEventBus;
-import me.vekster.lightanticheat.event.bus.LACEventRegistrar;
+import me.vekster.lightanticheat.event.bus.LACEventSubscriber;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.util.annotation.SecureAsync;
 import me.vekster.lightanticheat.util.config.ConfigManager;
@@ -18,7 +18,7 @@ import org.bukkit.event.Listener;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class Check extends CheckUtil {
+public abstract class Check extends CheckUtil implements LACEventSubscriber {
 
     private static final Map<Check, CheckSetting> CHECKS = new HashMap<>();
     private static final Map<CheckName, CheckSetting> CHECK_SETTING = new HashMap<>();
@@ -61,7 +61,9 @@ public abstract class Check extends CheckUtil {
         LACEventBus.unregister(listener);
         if (checkSetting.enabled && ConfigManager.Config.enabled) {
             Bukkit.getServer().getPluginManager().registerEvents(listener, Main.getInstance());
-            LACEventRegistrar.register(listener);
+            if (listener instanceof LACEventSubscriber) {
+                ((LACEventSubscriber) listener).registerLACEvents();
+            }
         }
         CHECK_LISTENERS.put(name, listener);
     }
@@ -95,6 +97,10 @@ public abstract class Check extends CheckUtil {
             buffer.put("missedMethodFlag", true);
         }
         buffer.put("lastMethodFlag", currentTime);
+    }
+
+    @Override
+    public void registerLACEvents() {
     }
 
 }

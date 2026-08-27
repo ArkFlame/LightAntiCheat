@@ -3,6 +3,10 @@ package me.vekster.lightanticheat.check.checks.movement.speed;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.movement.MovementCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
 import me.vekster.lightanticheat.player.cache.PlayerCache;
@@ -56,7 +60,15 @@ public class SpeedE extends MovementCheck implements Listener {
                 time - cache.lastFlight > 750;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.HIGH, this, "afterMovement", LACMovementRequirement.POSITION, event -> afterMovement((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onTeleportHorizontal", LACMovementRequirement.POSITION, event -> onTeleportHorizontal((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onTeleportVertical", LACMovementRequirement.POSITION, event -> onTeleportVertical((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onHorizontal", LACMovementRequirement.POSITION, event -> onHorizontal((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onVertical", LACMovementRequirement.POSITION, event -> onVertical((LACAsyncPlayerMoveEvent) event));
+    }
+
     public void afterMovement(LACAsyncPlayerMoveEvent event) {
         Buffer buffer = getBuffer(event.getPlayer(), true);
         buffer.put("lastMovement", System.currentTimeMillis());
@@ -86,7 +98,6 @@ public class SpeedE extends MovementCheck implements Listener {
         buffer.put("lastTeleport", System.currentTimeMillis());
     }
 
-    @EventHandler
     public void onTeleportHorizontal(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -121,7 +132,6 @@ public class SpeedE extends MovementCheck implements Listener {
         }, 1);
     }
 
-    @EventHandler
     public void onTeleportVertical(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -156,7 +166,6 @@ public class SpeedE extends MovementCheck implements Listener {
         }, 1);
     }
 
-    @EventHandler
     public void onHorizontal(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;
@@ -237,7 +246,6 @@ public class SpeedE extends MovementCheck implements Listener {
         });
     }
 
-    @EventHandler
     public void onVertical(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;

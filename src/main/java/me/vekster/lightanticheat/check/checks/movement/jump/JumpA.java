@@ -23,6 +23,10 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.HashSet;
 import java.util.Set;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.bus.LACMovementRequirement;
 
 /**
  * HighJump
@@ -30,6 +34,11 @@ import java.util.Set;
 public class JumpA extends MovementCheck implements Listener {
     public JumpA() {
         super(CheckName.JUMP_A);
+    }
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.NORMAL, this, "onAsyncMovement", LACMovementRequirement.POSITION, event -> onAsyncMovement((LACAsyncPlayerMoveEvent) event));
     }
 
     @Override
@@ -56,7 +65,6 @@ public class JumpA extends MovementCheck implements Listener {
                 time - cache.lastWindBurst > 1500 && time - cache.lastWindBurstNotVanilla > 4000;
     }
 
-    @EventHandler
     public void onAsyncMovement(LACAsyncPlayerMoveEvent event) {
         LACPlayer lacPlayer = event.getLacPlayer();
         PlayerCache cache = lacPlayer.cache;

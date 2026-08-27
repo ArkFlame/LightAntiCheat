@@ -1,7 +1,11 @@
 package me.vekster.lightanticheat.player;
 
-import me.vekster.lightanticheat.event.packetrecive.LACAsyncPacketReceiveEvent;
-import me.vekster.lightanticheat.event.packetrecive.packettype.PacketType;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventSubscriber;
+import me.vekster.lightanticheat.event.bus.LACEventType;
+import me.vekster.lightanticheat.event.packetreceive.LACAsyncPacketReceiveEvent;
+import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.event.playerbreakblock.LACPlayerBreakBlockEvent;
 import me.vekster.lightanticheat.event.playermove.LACAsyncPlayerMoveEvent;
 import me.vekster.lightanticheat.event.playermove.LACPlayerMoveEvent;
@@ -49,7 +53,26 @@ import org.bukkit.projectiles.ProjectileSource;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LACPlayerListener implements Listener {
+public class LACPlayerListener implements Listener, LACEventSubscriber {
+
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "eventHistory", event -> eventHistory((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.LOWEST, this, "packetHistory", event -> packetHistory((LACAsyncPacketReceiveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "activePotionEffects", event -> activePotionEffects((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "entitiesAsync", event -> entitiesAsync((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastGlidingRiptidingFlight", event -> lastGlidingRiptidingFlight((LACPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastInsideVehicle", event -> lastInsideVehicle((LACPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOW, this, "lastVelocityChangeNotGround", event -> lastVelocityChangeNotGround((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_PLACE_BLOCK, LACEventPriority.HIGH, this, "lastBlockPlace", event -> lastBlockPlace((LACPlayerPlaceBlockEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_BREAK_BLOCK, LACEventPriority.HIGH, this, "lastBlockBreak", event -> lastBlockBreak((LACPlayerBreakBlockEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PACKET_RECEIVE, LACEventPriority.LOWEST, this, "lastSwing", event -> lastSwing((LACAsyncPacketReceiveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastPowderSnowWalk", event -> lastPowderSnowWalk((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastSlimeHoneyBlock", event -> lastSlimeHoneyBlock((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "stopLongBypassAfterRedirection", event -> stopLongBypassAfterRedirection((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastBlockExplosion", event -> lastBlockExplosion((LACAsyncPlayerMoveEvent) event));
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_MOVE, LACEventPriority.LOWEST, this, "lastInWater", event -> lastInWater((LACAsyncPlayerMoveEvent) event));
+    }
 
     private static final Set<LACPlayer> LEFT_PLAYERS = new HashSet<>();
 
@@ -114,7 +137,6 @@ public class LACPlayerListener implements Listener {
         }, 7, 7);
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
     public void eventHistory(LACAsyncPlayerMoveEvent event) {
         PlayerCache cache = event.getContext().cache();
         cache.history.onEvent.location.add(event.getFrom());
@@ -124,9 +146,8 @@ public class LACPlayerListener implements Listener {
                         CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.TRUE)));
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void packetHistory(LACAsyncPacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.FLYING)
+        public void packetHistory(LACAsyncPacketReceiveEvent event) {
+        if (event.getPacketType() != LACPacketType.FLYING)
             return;
         PlayerCache cache = event.getContext().cache();
         event.getLocation().ifPresent(loc -> cache.history.onPacket.location.add(loc));
@@ -136,16 +157,14 @@ public class LACPlayerListener implements Listener {
                         CheckUtil.isOnGround(event.getPlayer(), downBlocks, cache, LeanTowards.TRUE)));
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void activePotionEffects(LACAsyncPlayerMoveEvent event) {
+        public void activePotionEffects(LACAsyncPlayerMoveEvent event) {
         Map<PotionEffectType, PotionEffect> potionEffects = new ConcurrentHashMap<>();
         for (PotionEffect potionEffect : event.getPlayer().getActivePotionEffects())
             potionEffects.put(potionEffect.getType(), potionEffect);
         event.getContext().cache().potionEffects = potionEffects;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void entitiesAsync(LACAsyncPlayerMoveEvent event) {
+        public void entitiesAsync(LACAsyncPlayerMoveEvent event) {
         PlayerCache cache = event.getContext().cache();
         PlayerCooldown cooldown = event.getContext().owner().cooldown;
 
@@ -176,8 +195,7 @@ public class LACPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastGlidingRiptidingFlight(LACPlayerMoveEvent event) {
+        public void lastGlidingRiptidingFlight(LACPlayerMoveEvent event) {
         if (event.isPlayerGliding())
             event.getContext().cache().lastGliding = System.currentTimeMillis();
         if (event.isPlayerRiptiding())
@@ -186,8 +204,7 @@ public class LACPlayerListener implements Listener {
             event.getContext().cache().lastFlight = System.currentTimeMillis();
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastInsideVehicle(LACPlayerMoveEvent event) {
+        public void lastInsideVehicle(LACPlayerMoveEvent event) {
         if (!event.isPlayerInsideVehicle())
             return;
         event.getContext().cache().lastInsideVehicle = System.currentTimeMillis();
@@ -267,8 +284,7 @@ public class LACPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void lastVelocityChangeNotGround(LACAsyncPlayerMoveEvent event) {
+        public void lastVelocityChangeNotGround(LACAsyncPlayerMoveEvent event) {
         if (event.getContext().cache().history.onEvent.onGround.get(HistoryElement.FROM).towardsTrue ||
                 event.getContext().cache().history.onPacket.onGround.get(HistoryElement.FROM).towardsTrue) {
             event.getContext().cache().lastAirKbVelocity = 0;
@@ -328,15 +344,13 @@ public class LACPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
-    public void lastBlockPlace(LACPlayerPlaceBlockEvent event) {
+        public void lastBlockPlace(LACPlayerPlaceBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         lacPlayer.cache.lastBlockPlace = System.currentTimeMillis();
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
-    public void lastBlockBreak(LACPlayerBreakBlockEvent event) {
+        public void lastBlockBreak(LACPlayerBreakBlockEvent event) {
         Player player = event.getPlayer();
         LACPlayer lacPlayer = LACPlayer.getLacPlayer(player);
         lacPlayer.cache.lastBlockBreak = System.currentTimeMillis();
@@ -467,15 +481,13 @@ public class LACPlayerListener implements Listener {
         lacPlayer.cache.lastWindChargeReceive = System.currentTimeMillis();
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastSwing(LACAsyncPacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.ARM_ANIMATION)
+        public void lastSwing(LACAsyncPacketReceiveEvent event) {
+        if (event.getPacketType() != LACPacketType.ARM_ANIMATION)
             return;
         event.getLacPlayer().cache.lastSwingTime = System.currentTimeMillis();
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastPowderSnowWalk(LACAsyncPlayerMoveEvent event) {
+        public void lastPowderSnowWalk(LACAsyncPlayerMoveEvent event) {
         Material powderSnowMaterial = VerUtil.material.get("POWDER_SNOW");
         if (!event.getToDownMaterials().contains(powderSnowMaterial) &&
                 !event.getToWithinMaterials().contains(powderSnowMaterial) &&
@@ -492,8 +504,7 @@ public class LACPlayerListener implements Listener {
     }
 
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastSlimeHoneyBlock(LACAsyncPlayerMoveEvent event) {
+        public void lastSlimeHoneyBlock(LACAsyncPlayerMoveEvent event) {
         if (sameBlockPosition(event.getFrom(), event.getTo()))
             return;
 
@@ -589,8 +600,7 @@ public class LACPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void stopLongBypassAfterRedirection(LACAsyncPlayerMoveEvent event) {
+        public void stopLongBypassAfterRedirection(LACAsyncPlayerMoveEvent event) {
         long currentTime = System.currentTimeMillis();
         PlayerCache cache = event.getContext().cache();
         Vector vector = getVector(event.getFrom(), event.getTo());
@@ -716,8 +726,7 @@ public class LACPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastBlockExplosion(LACAsyncPlayerMoveEvent event) {
+        public void lastBlockExplosion(LACAsyncPlayerMoveEvent event) {
         for (CachedEntity cachedEntity : event.getContext().cache().entitiesNearby)
             if (VerUtil.isPrimedTnt(cachedEntity.entityType)) {
                 LACPlayer lacPlayer = event.getContext().owner();
@@ -727,8 +736,7 @@ public class LACPlayerListener implements Listener {
             }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void lastInWater(LACAsyncPlayerMoveEvent event) {
+        public void lastInWater(LACAsyncPlayerMoveEvent event) {
         if (!event.isPlayerInWater())
             return;
         event.getContext().cache().lastInWater = System.currentTimeMillis();

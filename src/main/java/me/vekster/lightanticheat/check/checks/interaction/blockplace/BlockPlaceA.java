@@ -3,6 +3,9 @@ package me.vekster.lightanticheat.check.checks.interaction.blockplace;
 import me.vekster.lightanticheat.check.CheckName;
 import me.vekster.lightanticheat.check.buffer.Buffer;
 import me.vekster.lightanticheat.check.checks.interaction.InteractionCheck;
+import me.vekster.lightanticheat.event.bus.LACEventBus;
+import me.vekster.lightanticheat.event.bus.LACEventPriority;
+import me.vekster.lightanticheat.event.bus.LACEventType;
 import me.vekster.lightanticheat.event.playerplaceblock.LACAsyncPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.event.playerplaceblock.LACPlayerPlaceBlockEvent;
 import me.vekster.lightanticheat.player.LACPlayer;
@@ -17,7 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.util.Vector;
 
@@ -33,14 +35,18 @@ public class BlockPlaceA extends InteractionCheck implements Listener {
         super(CheckName.BLOCKPLACE_A);
     }
 
-    @EventHandler
+    @Override
+    public void registerLACEvents() {
+        LACEventBus.register(LACEventType.ASYNC_PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onAsyncBlockBreak", event -> onAsyncBlockBreak((LACAsyncPlayerPlaceBlockEvent) event));
+        LACEventBus.register(LACEventType.PLAYER_PLACE_BLOCK, LACEventPriority.NORMAL, this, "onBlockBreak", event -> onBlockBreak((LACPlayerPlaceBlockEvent) event));
+    }
+
     public void onAsyncBlockBreak(LACAsyncPlayerPlaceBlockEvent event) {
         Buffer buffer = getBuffer(event.getPlayer(), true);
         buffer.put("lastAsyncResult", flag(event.getPlayer(), event.getLacPlayer(),
                 event.getBlock(), event.getEyeLocation(), true));
     }
 
-    @EventHandler
     public void onBlockBreak(LACPlayerPlaceBlockEvent event) {
         Buffer buffer = getBuffer(event.getPlayer(), true);
         if (!buffer.getBoolean("lastAsyncResult"))
