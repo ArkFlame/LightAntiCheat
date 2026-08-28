@@ -1,5 +1,5 @@
 name: LightAntiCheat-Plus
-version: '2.0.1'
+version: '2.0.2'
 main: me.vekster.lightanticheat.Main
 api-version: '1.13'
 folia-supported: true

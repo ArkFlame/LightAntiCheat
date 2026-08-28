@@ -13,7 +13,7 @@
 
 ## Installation
 
-1. Build or download `LightAntiCheat-Plus-2.0.1.jar` (`pom.xml:8-9`, `finalName: pom.xml:114`).
+1. Build or download `LightAntiCheat-Plus-2.0.2.jar` (`pom.xml:8-9`, `finalName: pom.xml:114`).
 2. Place the jar in `plugins/` on the server.
 3. Install PacketEvents separately if you intend to use the default mode (see below). No auto-install is performed.
 4. **Full restart** the server — do not rely on `/reload` or plugin hot-swap for packet integration. `Main.onEnable:91-201` validates `listener-mode` and constructs `LACInputEngine`; on invalid mode or failed provider start the plugin disables itself (`Main.java:98-108`). A full restart is the authoritative way to (re)bind packet listeners.

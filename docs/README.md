@@ -40,7 +40,7 @@ LightAntiCheat is a Spigot/Paper anti-cheat (Folia-supported via `folia-supporte
 
 ## Version and Artifact
 
-Current artifact coordinates are defined in `pom.xml:1-10` as `groupId: com.arkflame`, `artifactId: LightAntiCheat-Plus`, `version: 2.0.1`, `packaging: jar`. The shaded output is `target/LightAntiCheat-Plus-2.0.1.jar` per `pom.xml:113` (`finalName`). The `version` in `src/main/resources/plugin.yml` is filtered from `pom.xml` at build time. Refer to `pom.xml` for the authoritative version.
+Current artifact coordinates are defined in `pom.xml:1-10` as `groupId: com.arkflame`, `artifactId: LightAntiCheat-Plus`, `version: 2.0.2`, `packaging: jar`. The shaded output is `target/LightAntiCheat-Plus-2.0.2.jar` per `pom.xml:113` (`finalName`). The `version` in `src/main/resources/plugin.yml` is filtered from `pom.xml` at build time. Refer to `pom.xml` for the authoritative version.
 
 ## Canonical Defaults
 

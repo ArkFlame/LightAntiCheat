@@ -8,7 +8,7 @@ Canonical build:
 mvn clean package
 ```
 
-`pom.xml:113` sets `<finalName>LightAntiCheat-Plus-${project.version}</finalName>` (`2.0.1` at `pom.xml:5`). Output is `target/LightAntiCheat-Plus-2.0.1.jar` (shaded). Do not use `mvn package` without `clean` for proof builds; `clean` is required to verify artifact freshness.
+`pom.xml:113` sets `<finalName>LightAntiCheat-Plus-${project.version}</finalName>` (`2.0.2` at `pom.xml:5`). Output is `target/LightAntiCheat-Plus-2.0.2.jar` (shaded). Do not use `mvn package` without `clean` for proof builds; `clean` is required to verify artifact freshness.
 
 ## Java Target
 
