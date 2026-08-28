@@ -7,7 +7,6 @@ import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.input.model.LACPlayerSession;
 import me.vekster.lightanticheat.input.provider.LACInputProvider;
 import me.vekster.lightanticheat.player.LACPlayerManager;
-import me.vekster.lightanticheat.util.config.ConfigManager;
 import me.vekster.lightanticheat.util.scheduler.gamescheduler.GameScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -24,13 +23,11 @@ import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LACInputEngineTest {
 
-    // ---- minimal fake provider ----
     static final class FakeProvider implements LACInputProvider {
         final LACInputMode mode;
         boolean started;
@@ -58,7 +55,6 @@ class LACInputEngineTest {
     }
 
     static final class TestFactory implements LACInputEngine.ProviderFactory {
-        boolean packetAvailable = true;
         FakeProvider packet;
         FakeProvider nms;
         int packetCreateCount;
@@ -70,7 +66,6 @@ class LACInputEngineTest {
             this.packet = packet;
             this.nms = nms;
         }
-        @Override public boolean isPacketAvailable() { return packetAvailable; }
         @Override public LACInputProvider createPacketProvider(LACInputEngine engine) throws Exception {
             if (packetFailCreate) throw new IllegalStateException("create packet fail");
             packetCreateCount++;
@@ -85,7 +80,6 @@ class LACInputEngineTest {
         }
     }
 
-    // ---- helpers ----
     private Main fakePlugin() {
         try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
@@ -99,10 +93,6 @@ class LACInputEngineTest {
         }
     }
 
-    private void setListenerMode(String v) {
-        ConfigManager.Config.listenerMode = v;
-    }
-
     @SuppressWarnings("unchecked")
     private void clearPlayers() throws Exception {
         Field f = LACPlayerManager.class.getDeclaredField("PLAYERS");
@@ -110,7 +100,6 @@ class LACInputEngineTest {
         ((Map<?, ?>) f.get(null)).clear();
     }
 
-    // scheduler + bukkit mock to avoid NPE during enqueue drains
     private GameScheduler originalScheduler;
 
     @BeforeEach
@@ -182,236 +171,183 @@ class LACInputEngineTest {
         @Override public void entityThread(Player player, boolean force, Runnable task) { if (task != null) task.run(); }
     }
 
-    // ---- tests ----
+    // ---- 14 required tests ----
 
     @Test
-    void packetStartup() {
-        setListenerMode("packet");
+    void packetStartupStartsPacketOnly() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
         try {
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-            assertEquals(1, packet.startCount);
-            assertEquals(0, nms.startCount);
-            assertTrue(packet.isStarted());
+            assertEquals("1/0/PACKET/1", packet.startCount + "/" + nms.startCount + "/" + engine.getActiveMode() + "/" + engine.getInputEpoch());
         } finally { engine.close(); }
     }
 
     @Test
-    void nmsStartup() {
-        setListenerMode("nms");
+    void nmsStartupStartsNmsOnly() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         TestFactory factory = new TestFactory(packet, nms);
-        factory.packetAvailable = false;
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.NMS, factory);
         try {
-            assertEquals(LACInputMode.NMS, engine.getActiveMode());
-            assertEquals(1, nms.startCount);
-            assertEquals(0, packet.startCount);
+            assertEquals("0/1/NMS", packet.startCount + "/" + nms.startCount + "/" + engine.getActiveModeOptional().orElse(null));
         } finally { engine.close(); }
     }
 
     @Test
-    void sameModeReloadDoesNotRestartProvider() {
-        setListenerMode("packet");
+    void packetStartupFailureDoesNotFallbackToNms() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        packet.failOnStart = true;
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        try {
-            long epochBefore = engine.getInputEpoch();
-            int startBefore = packet.startCount;
-            engine.reconfigure(LACInputMode.PACKET);
-            assertEquals(startBefore, packet.startCount, "same-mode must not restart");
-            assertEquals(epochBefore, engine.getInputEpoch(), "epoch must not increment on same-mode");
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-        } finally { engine.close(); }
+        assertThrows(IllegalStateException.class, () -> new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory));
+        assertEquals("0/0", nms.startCount + "/" + factory.nmsCreateCount);
     }
 
     @Test
-    void nmsToPacketSwitchesOnlyAfterTargetStartSucceeds() {
-        setListenerMode("nms");
-        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
-        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
-        TestFactory factory = new TestFactory(packet, nms);
-        factory.packetAvailable = false;
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        try {
-            assertEquals(LACInputMode.NMS, engine.getActiveMode());
-            long epochBefore = engine.getInputEpoch();
-            factory.packetAvailable = true; // now target can start
-            engine.reconfigure(LACInputMode.PACKET);
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-            assertEquals(1, packet.startCount);
-            assertEquals(1, nms.closeCount, "old NMS must be closed after switch");
-            assertEquals(epochBefore + 1, engine.getInputEpoch());
-            assertTrue(packet.isStarted());
-        } finally { engine.close(); }
-    }
-
-    @Test
-    void failedTargetStartupPreservesOldActiveMode() {
-        setListenerMode("nms");
-        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
-        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
-        TestFactory factory = new TestFactory(packet, nms);
-        factory.packetAvailable = false;
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        try {
-            long epochBefore = engine.getInputEpoch();
-            factory.packetAvailable = false; // target PACKET unavailable -> ensurePacket will throw
-            packet.failOnStart = false; // not needed; availability already false
-            engine.reconfigure(LACInputMode.PACKET);
-            assertEquals(LACInputMode.NMS, engine.getActiveMode(), "must stay on old mode");
-            assertEquals(epochBefore, engine.getInputEpoch(), "epoch must not increment on failure");
-            assertEquals(0, nms.closeCount, "old provider must not be closed on failure");
-        } finally { engine.close(); }
-    }
-
-    @Test
-    void packetToNmsClosesOldNmsOrActivatesExactTarget() {
-        // Start PACKET then switch to NMS: packet remains, nms started, mode becomes NMS
-        setListenerMode("packet");
-        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
-        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
-        TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        try {
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-            long epochBefore = engine.getInputEpoch();
-            engine.reconfigure(LACInputMode.NMS);
-            assertEquals(LACInputMode.NMS, engine.getActiveMode());
-            assertEquals(1, nms.startCount);
-            assertEquals(epochBefore + 1, engine.getInputEpoch());
-            // packet provider stays started (not closed when leaving packet mode per engine spec)
-            assertEquals(0, packet.closeCount);
-            assertTrue(nms.isStarted());
-            // now switch back NMS -> PACKET must close NMS and activate packet
-            long epochMid = engine.getInputEpoch();
-            engine.reconfigure(LACInputMode.PACKET);
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-            assertEquals(1, nms.closeCount);
-            assertEquals(epochMid + 1, engine.getInputEpoch());
-        } finally { engine.close(); }
-    }
-
-    @Test
-    void failedNmsTargetPreservesPacketMode() {
-        setListenerMode("packet");
+    void nmsStartupFailureDoesNotFallbackToPacket() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         nms.failOnStart = true;
         TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
+        assertThrows(IllegalStateException.class, () -> new LACInputEngine(fakePlugin(), LACInputMode.NMS, factory));
+        assertEquals("0/0", packet.startCount + "/" + factory.packetCreateCount);
+    }
+
+    @Test
+    void sameModeReconfigureDoesNotRestartOrAdvanceEpoch() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
+        try {
+            long epochBefore = engine.getInputEpoch();
+            int startBefore = packet.startCount;
+            engine.reconfigure(LACInputMode.PACKET);
+            assertEquals(startBefore + "/" + epochBefore + "/PACKET", packet.startCount + "/" + engine.getInputEpoch() + "/" + engine.getActiveMode());
+        } finally { engine.close(); }
+    }
+
+    @Test
+    void failedPacketReconfigureThrowsAndPreservesNms() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.NMS, factory);
+        try {
+            long epochBefore = engine.getInputEpoch();
+            packet.failOnStart = true;
+            assertThrows(IllegalStateException.class, () -> engine.reconfigure(LACInputMode.PACKET));
+            assertEquals("NMS/" + epochBefore + "/0/0", engine.getActiveMode() + "/" + engine.getInputEpoch() + "/" + nms.closeCount + "/" + packet.startCount);
+        } finally { engine.close(); }
+    }
+
+    @Test
+    void failedNmsReconfigureThrowsAndPreservesPacket() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        nms.failOnStart = true;
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
+        try {
+            long epochBefore = engine.getInputEpoch();
+            assertThrows(IllegalStateException.class, () -> engine.reconfigure(LACInputMode.NMS));
+            assertEquals("PACKET/" + epochBefore + "/0", engine.getActiveMode() + "/" + engine.getInputEpoch() + "/" + packet.closeCount);
+        } finally { engine.close(); }
+    }
+
+    @Test
+    void successfulNmsToPacketPublishesThenClosesNms() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.NMS, factory);
+        try {
+            long epochBefore = engine.getInputEpoch();
+            engine.reconfigure(LACInputMode.PACKET);
+            assertEquals("PACKET/1/1/" + (epochBefore + 1), engine.getActiveMode() + "/" + packet.startCount + "/" + nms.closeCount + "/" + engine.getInputEpoch());
+        } finally { engine.close(); }
+    }
+
+    @Test
+    void successfulPacketToNmsStartsNmsAndKeepsPacketListenerDormant() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
         try {
             long epochBefore = engine.getInputEpoch();
             engine.reconfigure(LACInputMode.NMS);
-            assertEquals(LACInputMode.PACKET, engine.getActiveMode());
-            assertEquals(epochBefore, engine.getInputEpoch());
-            assertEquals(0, packet.closeCount);
+            assertEquals("NMS/1/0/" + (epochBefore + 1), engine.getActiveMode() + "/" + nms.startCount + "/" + packet.closeCount + "/" + engine.getInputEpoch());
         } finally { engine.close(); }
     }
 
     @Test
-    void inputEpochIncrementsOnSuccessfulModeChange() {
-        setListenerMode("packet");
+    void successfulModeChangeAdvancesEpochExactlyOnce() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
         try {
-            long e1 = engine.getInputEpoch();
+            long e0 = engine.getInputEpoch();
             engine.reconfigure(LACInputMode.NMS);
-            assertEquals(e1 + 1, engine.getInputEpoch());
-            engine.reconfigure(LACInputMode.PACKET);
-            assertEquals(e1 + 2, engine.getInputEpoch());
-            // failed switch must not increment
-            nms.failOnStart = true;
-            // need packet -> nms again but nms is now closed; recreate failing nms
-            // nms was closed and nulled after leaving NMS, so next ensure will call factory.createNmsProvider
-            // factory returns same nms instance which is now closed; start will fail
-            engine.reconfigure(LACInputMode.NMS);
-            assertEquals(e1 + 2, engine.getInputEpoch());
+            assertEquals("" + (e0 + 1), "" + engine.getInputEpoch());
         } finally { engine.close(); }
     }
 
     @Test
-    void oldEpochQueuedFrameRejected() {
-        setListenerMode("packet");
+    void closedEngineRejectsReconfigure() {
         FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
         FakeProvider nms = new FakeProvider(LACInputMode.NMS);
         TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
+        engine.close();
+        assertThrows(IllegalStateException.class, () -> engine.reconfigure(LACInputMode.NMS));
+    }
+
+    @Test
+    void nullTargetRejectsReconfigure() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
+        try {
+            assertThrows(IllegalArgumentException.class, () -> engine.reconfigure(null));
+        } finally { engine.close(); }
+    }
+
+    @Test
+    void closeIsIdempotent() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
+        long epochBeforeClose = engine.getInputEpoch();
+        engine.close();
+        long epochAfterFirst = engine.getInputEpoch();
+        engine.close();
+        assertEquals("1/" + (epochBeforeClose + 1) + "/" + epochAfterFirst, packet.closeCount + "/" + epochAfterFirst + "/" + engine.getInputEpoch());
+    }
+
+    @Test
+    void oldEpochFrameStillRejected() {
+        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
+        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
+        TestFactory factory = new TestFactory(packet, nms);
+        LACInputEngine engine = new LACInputEngine(fakePlugin(), LACInputMode.PACKET, factory);
         try {
             long epochBefore = engine.getInputEpoch();
             engine.reconfigure(LACInputMode.NMS);
             long epochAfter = engine.getInputEpoch();
             assertTrue(epochAfter > epochBefore);
-            // Craft frame with old engine epoch but different session epoch to trigger engine discard
             UUID pid = UUID.randomUUID();
             UUID wid = UUID.randomUUID();
             LACPlayerSession session = new LACPlayerSession(pid, wid, 99L);
-            // frame epoch = old epoch (1) != session epoch (99) and < inputEpoch (2) => discarded
             LACPacketFrame oldFrame = new LACPacketFrame(session, epochBefore, 1L, LACPacketType.FLYING, 0, Optional.empty(), 0L);
             engine.enqueue(oldFrame, Optional.empty());
             Optional<LACPlayerInputQueue> q = engine.getQueue(pid);
-            assertTrue(!q.isPresent() || q.get().isEmpty(), "old-epoch frame must be rejected");
-            // valid frame with matching session epoch should be accepted via queue
-            // Use session epoch == frame epoch, but frame epoch == session epoch so not rejected at engine level
-            // However queue expects frame epoch == session epoch, so pass fresh pid/wid with epoch 99 and use same?
-            // To prove acceptance we need a frame that passes queue checks: frame epoch == session epoch
-            // We cannot feed engine-epoch frame that also matches queue, so we test rejection only.
+            assertEquals("true", String.valueOf(!q.isPresent() || q.get().isEmpty()));
         } finally { engine.close(); }
-    }
-
-    @Test
-    void closeIdempotent() {
-        setListenerMode("packet");
-        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
-        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
-        TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        long epochBeforeClose = engine.getInputEpoch();
-        engine.close();
-        long epochAfterFirst = engine.getInputEpoch();
-        assertEquals(epochBeforeClose + 1, epochAfterFirst);
-        assertEquals(1, packet.closeCount);
-        engine.close();
-        assertEquals(1, packet.closeCount, "second close must be idempotent");
-        assertEquals(epochAfterFirst, engine.getInputEpoch(), "epoch must not increment on second close");
-    }
-
-    @Test
-    void noProviderOperationAfterClose() {
-        setListenerMode("packet");
-        FakeProvider packet = new FakeProvider(LACInputMode.PACKET);
-        FakeProvider nms = new FakeProvider(LACInputMode.NMS);
-        TestFactory factory = new TestFactory(packet, nms);
-        LACInputEngine engine = new LACInputEngine(fakePlugin(), factory);
-        engine.close();
-        int packetStartBefore = packet.startCount;
-        int packetCloseBefore = packet.closeCount;
-        int nmsStartBefore = nms.startCount;
-        long epochBefore = engine.getInputEpoch();
-        // reconfigure after close must do nothing
-        engine.reconfigure(LACInputMode.NMS);
-        assertEquals(packetStartBefore, packet.startCount);
-        assertEquals(packetCloseBefore, packet.closeCount);
-        assertEquals(nmsStartBefore, nms.startCount);
-        assertEquals(epochBefore, engine.getInputEpoch());
-        // enqueue after close must be discarded (no queue created)
-        UUID pid = UUID.randomUUID();
-        UUID wid = UUID.randomUUID();
-        LACPlayerSession session = new LACPlayerSession(pid, wid, 1L);
-        LACPacketFrame f = new LACPacketFrame(session, session.getPlayerEpoch(), 0L, LACPacketType.FLYING, 0, Optional.empty(), 0L);
-        engine.enqueue(f, Optional.empty());
-        assertFalse(engine.getQueue(pid).isPresent(), "enqueue after close must be dropped");
-        // also null-safe reconfigure after close
-        engine.reconfigure(null);
-        engine.reconfigure(LACInputMode.PACKET);
-        assertEquals(epochBefore, engine.getInputEpoch());
     }
 }

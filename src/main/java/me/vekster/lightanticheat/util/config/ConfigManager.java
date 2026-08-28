@@ -255,32 +255,31 @@ public class ConfigManager extends PlaceholderConvertor {
         instance.reloadConfig();
         loadConfig();
         // Reconfigure input engine before check re-registration (transactional)
-        try {
-            me.vekster.lightanticheat.input.model.LACInputMode target = null;
-            java.util.Optional<me.vekster.lightanticheat.input.model.LACInputMode> parsed =
-                    me.vekster.lightanticheat.input.model.LACInputMode.parse(Config.listenerMode);
-            if (parsed.isPresent()) {
-                target = parsed.get();
-                me.vekster.lightanticheat.input.LACInputEngine engine = instance.getInputEngine();
-                if (engine != null) {
-                    me.vekster.lightanticheat.input.model.LACInputMode before = engine.getActiveMode();
-                    if (target == before) {
-                        // same-mode no-op
-                    } else {
-                        me.vekster.lightanticheat.input.model.LACInputMode beforeReconf = before;
+        java.util.Optional<me.vekster.lightanticheat.input.model.LACInputMode> parsed =
+                me.vekster.lightanticheat.input.model.LACInputMode.parse(Config.listenerMode);
+        if (!parsed.isPresent()) {
+            String beforeStr = "unknown";
+            try {
+                me.vekster.lightanticheat.input.LACInputEngine tmpEngine = instance.getInputEngine();
+                if (tmpEngine != null) {
+                    beforeStr = String.valueOf(tmpEngine.getActiveMode());
+                }
+            } catch (Exception ignored) {
+            }
+            Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Invalid listener-mode: '" + Config.listenerMode + "'! Keeping previous mode '" + beforeStr + "'.");
+        } else {
+            me.vekster.lightanticheat.input.model.LACInputMode target = parsed.get();
+            me.vekster.lightanticheat.input.LACInputEngine engine = instance.getInputEngine();
+            if (engine != null) {
+                me.vekster.lightanticheat.input.model.LACInputMode before = engine.getActiveMode();
+                if (target != before) {
+                    try {
                         engine.reconfigure(target);
-                        me.vekster.lightanticheat.input.model.LACInputMode after = engine.getActiveMode();
-                        if (after != target) {
-                            // failed target keeps prior provider
-                            Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Failed to reconfigure listener-mode to '" + Config.listenerMode + "': provider unavailable. Keeping previous mode '" + beforeReconf + "'.");
-                        }
+                    } catch (IllegalStateException e) {
+                        Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Failed to reconfigure listener-mode to '" + target + "': " + e.getMessage() + " Keeping previous mode '" + before + "'.");
                     }
                 }
-            } else {
-                Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Invalid listener-mode: '" + Config.listenerMode + "'! Accepted values: [packet, nms]. Keeping previous mode.");
             }
-        } catch (Exception e) {
-            Logger.logConsole(LogType.ERROR, "(" + instance.getName() + ") Failed to reconfigure input mode: " + e.getMessage());
         }
         for (CheckName checkName : CheckName.values()) {
             CheckSetting checkSetting = Check.getCheckSetting(checkName);

@@ -93,28 +93,19 @@ public class Main extends JavaPlugin {
         FoliaUtil.loadFoliaUtil();
         ConfigManager.loadConfig();
 
-        Optional<LACInputMode> parsedMode = LACInputMode.parse(ConfigManager.Config.listenerMode);
+        final Optional<LACInputMode> parsedMode = LACInputMode.parse(ConfigManager.Config.listenerMode);
         if (!parsedMode.isPresent()) {
             Logger.logConsole(LogType.ERROR, "(" + getName() + ") Invalid listener-mode: '" + ConfigManager.Config.listenerMode + "'! Accepted values: [packet, nms]. Disabling plugin.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        LACInputMode targetMode = parsedMode.get();
-        if (targetMode == LACInputMode.PACKET) {
-            boolean packetAvailable;
-            try {
-                packetAvailable = (Boolean) Class.forName("me.vekster.lightanticheat.input.provider.packetevents.PacketEventsInputProvider")
-                        .getMethod("isPacketEventsAvailable").invoke(null);
-            } catch (Exception e) {
-                packetAvailable = false;
-            }
-            if (!packetAvailable) {
-                Logger.logConsole(LogType.ERROR, "(" + getName() + ") listener-mode 'packet' requires PacketEvents but it is not available/enabled. Disabling plugin.");
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
+        try {
+            inputEngine = new LACInputEngine(this, parsedMode.get());
+        } catch (IllegalStateException exception) {
+            Logger.logConsole(LogType.ERROR, "(" + getName() + ") Failed to start listener-mode '" + ConfigManager.Config.listenerMode + "': " + exception.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
         }
-        inputEngine = new LACInputEngine(this);
 
         Buffer.loadBufferCleaner(BUFFER_DURATION_MILS);
         TPSCalculator.loadTPSCalculator();

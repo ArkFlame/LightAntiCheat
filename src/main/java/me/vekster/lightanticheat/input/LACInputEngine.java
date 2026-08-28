@@ -6,7 +6,6 @@ import me.vekster.lightanticheat.input.model.LACMovementFrame;
 import me.vekster.lightanticheat.input.model.LACPacketFrame;
 import me.vekster.lightanticheat.input.model.LACPlayerSession;
 import me.vekster.lightanticheat.input.provider.LACInputProvider;
-import me.vekster.lightanticheat.util.config.ConfigManager;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,24 +16,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class LACInputEngine implements AutoCloseable {
 
     public interface ProviderFactory {
-        boolean isPacketAvailable();
         LACInputProvider createPacketProvider(LACInputEngine engine) throws Exception;
         LACInputProvider createNmsProvider(Main plugin, LACInputEngine engine) throws Exception;
     }
 
     private static final ProviderFactory DEFAULT_FACTORY = new ProviderFactory() {
-        @Override
-        public boolean isPacketAvailable() {
-            try {
-                Class<?> clazz = Class.forName("me.vekster.lightanticheat.input.provider.packetevents.PacketEventsInputProvider");
-                java.lang.reflect.Method m = clazz.getMethod("isPacketEventsAvailable");
-                Object result = m.invoke(null);
-                return Boolean.TRUE.equals(result);
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
         @Override
         public LACInputProvider createPacketProvider(LACInputEngine engine) throws Exception {
             Class<?> clazz = Class.forName("me.vekster.lightanticheat.input.provider.packetevents.PacketEventsInputProvider");
@@ -62,74 +48,51 @@ public final class LACInputEngine implements AutoCloseable {
     private final ConcurrentHashMap<UUID, AtomicLong> sequences = new ConcurrentHashMap<>();
     private final LACBukkitStateBridge bridge;
 
-    public LACInputEngine(Main plugin) {
-        this(plugin, DEFAULT_FACTORY);
+    public LACInputEngine(final Main plugin, final LACInputMode initialMode) {
+        this(plugin, initialMode, DEFAULT_FACTORY);
     }
 
-    LACInputEngine(Main plugin, ProviderFactory factory) {
+    LACInputEngine(final Main plugin, final LACInputMode initialMode, final ProviderFactory providerFactory) {
         if (plugin == null) {
             throw new IllegalArgumentException("plugin must not be null");
         }
+        if (initialMode == null) {
+            throw new IllegalArgumentException("initialMode must not be null");
+        }
+        if (providerFactory == null) {
+            throw new IllegalArgumentException("providerFactory must not be null");
+        }
         this.plugin = plugin;
-        this.providerFactory = factory != null ? factory : DEFAULT_FACTORY;
+        this.providerFactory = providerFactory;
         this.dispatcher = new LACInputDispatcher(this);
         this.bridge = new LACBukkitStateBridge(this);
-        startup();
+        activateInitialMode(initialMode);
     }
 
-    private void startup() {
-        LACInputMode target;
-        try {
-            String raw = ConfigManager.Config.listenerMode;
-            Optional<LACInputMode> parsed = LACInputMode.parse(raw);
-            target = parsed.isPresent() ? parsed.get() : LACInputMode.PACKET;
-        } catch (Exception e) {
-            target = LACInputMode.PACKET;
-        }
-        if (target == LACInputMode.PACKET && !isPacketAvailable()) {
-            target = LACInputMode.NMS;
-        }
-        if (target == LACInputMode.NMS) {
-            try {
-                ensureNmsProvider();
-            } catch (Exception e) {
-                if (isPacketAvailable()) {
-                    try {
-                        ensurePacketProvider();
-                        activeMode.set(LACInputMode.PACKET);
-                        return;
-                    } catch (Exception ex) {
-                        // fall through
-                    }
-                }
-                activeMode.set(LACInputMode.NMS);
-                return;
-            }
-        } else {
+    private void activateInitialMode(final LACInputMode mode) {
+        if (mode == LACInputMode.PACKET) {
             try {
                 ensurePacketProvider();
             } catch (Exception e) {
-                try {
-                    ensureNmsProvider();
-                    target = LACInputMode.NMS;
-                } catch (Exception ex) {
-                    // leave mode as PACKET but not started
-                }
+                throw new IllegalStateException("Failed to start listener-mode '" + mode + "': " + e.getMessage(), e);
+            } catch (LinkageError e) {
+                throw new IllegalStateException("Failed to start listener-mode '" + mode + "': " + e.getMessage(), e);
+            }
+        } else if (mode == LACInputMode.NMS) {
+            try {
+                ensureNmsProvider();
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to start listener-mode '" + mode + "': " + e.getMessage(), e);
+            } catch (LinkageError e) {
+                throw new IllegalStateException("Failed to start listener-mode '" + mode + "': " + e.getMessage(), e);
             }
         }
-        activeMode.set(target);
-    }
-
-    private boolean isPacketAvailable() {
-        return providerFactory.isPacketAvailable();
+        activeMode.set(mode);
     }
 
     private synchronized void ensurePacketProvider() throws Exception {
         if (packetProvider != null && packetProvider.isStarted()) {
             return;
-        }
-        if (!isPacketAvailable()) {
-            throw new IllegalStateException("PacketEvents not available");
         }
         if (packetProvider == null) {
             packetProvider = providerFactory.createPacketProvider(this);
@@ -148,17 +111,16 @@ public final class LACInputEngine implements AutoCloseable {
     }
 
     public synchronized void reconfigure(LACInputMode target) {
-        if (closed) {
-            return;
-        }
         if (target == null) {
-            return;
+            throw new IllegalArgumentException("target must not be null");
+        }
+        if (closed) {
+            throw new IllegalStateException("LAC input engine is closed");
         }
         LACInputMode current = activeMode.get();
         if (target == current) {
             return;
         }
-        // validate and start target first
         try {
             if (target == LACInputMode.PACKET) {
                 ensurePacketProvider();
@@ -166,12 +128,13 @@ public final class LACInputEngine implements AutoCloseable {
                 ensureNmsProvider();
             }
         } catch (Exception e) {
-            return;
+            throw new IllegalStateException("Failed to start listener-mode '" + target + "': " + e.getMessage(), e);
+        } catch (LinkageError e) {
+            throw new IllegalStateException("Failed to start listener-mode '" + target + "': " + e.getMessage(), e);
         }
         LACInputMode previous = activeMode.get();
         inputEpoch.incrementAndGet();
         activeMode.set(target);
-        // close previous NMS after publication when leaving NMS
         if (previous == LACInputMode.NMS && target != LACInputMode.NMS) {
             LACInputProvider toClose = nmsProvider;
             if (toClose != null) {
@@ -182,7 +145,6 @@ public final class LACInputEngine implements AutoCloseable {
                 nmsProvider = null;
             }
         }
-        // PacketEvents listener may remain registered but no-op while mode!=PACKET (handled in provider handleReceive)
     }
 
     public LACBukkitStateBridge getBridge() {
@@ -194,19 +156,11 @@ public final class LACInputEngine implements AutoCloseable {
     }
 
     public LACInputMode getActiveMode() {
-        LACInputMode mode = activeMode.get();
-        if (mode != null) {
-            return mode;
+        final LACInputMode mode = activeMode.get();
+        if (mode == null) {
+            throw new IllegalStateException("LAC input engine has no active provider.");
         }
-        try {
-            String raw = ConfigManager.Config.listenerMode;
-            Optional<LACInputMode> parsed = LACInputMode.parse(raw);
-            if (parsed.isPresent()) {
-                return parsed.get();
-            }
-        } catch (Exception ignored) {
-        }
-        return LACInputMode.PACKET;
+        return mode;
     }
 
     public Optional<LACInputMode> getActiveModeOptional() {

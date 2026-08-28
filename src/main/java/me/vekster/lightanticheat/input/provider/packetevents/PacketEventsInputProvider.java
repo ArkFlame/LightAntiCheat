@@ -1,6 +1,7 @@
 package me.vekster.lightanticheat.input.provider.packetevents;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
@@ -20,6 +21,8 @@ import me.vekster.lightanticheat.input.model.LACPacketType;
 import me.vekster.lightanticheat.input.model.LACPlayerSession;
 import me.vekster.lightanticheat.input.provider.LACInputProvider;
 import me.vekster.lightanticheat.player.LACPlayerManager;
+import me.vekster.lightanticheat.util.logger.LogType;
+import me.vekster.lightanticheat.util.logger.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -32,33 +35,16 @@ public final class PacketEventsInputProvider implements LACInputProvider {
     private final LACInputEngine engine;
     private final PacketEventsMovementTracker tracker;
     private final Object lock = new Object();
+    private volatile PacketEventsAPI<?> registeredApi;
     private volatile PacketListenerCommon listenerHandle;
     private volatile boolean started;
 
-    public static boolean isPacketEventsAvailable() {
-        try {
-            Plugin pe = Bukkit.getPluginManager().getPlugin("packetevents");
-            if (pe == null || !pe.isEnabled()) {
-                return false;
-            }
-            Class<?> peClass = Class.forName("com.github.retrooper.packetevents.PacketEvents");
-            java.lang.reflect.Method getApi = peClass.getMethod("getAPI");
-            Object api = getApi.invoke(null);
-            if (api == null) {
-                return false;
-            }
-            try {
-                java.lang.reflect.Method isLoaded = api.getClass().getMethod("isLoaded");
-                Object loaded = isLoaded.invoke(api);
-                if (loaded instanceof Boolean && !((Boolean) loaded)) {
-                    return false;
-                }
-            } catch (NoSuchMethodException ignored) {
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
+    private static Plugin findPacketEventsPlugin() {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("packetevents");
+        if (plugin == null) {
+            plugin = Bukkit.getPluginManager().getPlugin("PacketEvents");
         }
+        return plugin;
     }
 
     public PacketEventsInputProvider(LACInputEngine engine) {
@@ -79,8 +65,39 @@ public final class PacketEventsInputProvider implements LACInputProvider {
     @Override
     public void start() {
         synchronized (lock) {
-            if (started) {
+            Plugin plugin = findPacketEventsPlugin();
+            if (plugin == null) {
+                throw new IllegalStateException("PacketEvents plugin not found.");
+            }
+            if (!plugin.isEnabled()) {
+                throw new IllegalStateException("PacketEvents plugin is installed but not enabled.");
+            }
+            final PacketEventsAPI<?> api = PacketEvents.getAPI();
+            if (api == null) {
+                throw new IllegalStateException("PacketEvents API is null after PacketEvents plugin enable.");
+            }
+            if (!api.isLoaded()) {
+                throw new IllegalStateException("PacketEvents API is not loaded.");
+            }
+            if (!api.isInitialized()) {
+                throw new IllegalStateException("PacketEvents API is not initialized.");
+            }
+            if (api.isTerminated()) {
+                throw new IllegalStateException("PacketEvents API is terminated.");
+            }
+            if (started && registeredApi == api && listenerHandle != null) {
                 return;
+            }
+            if (registeredApi != null && listenerHandle != null && registeredApi != api) {
+                try {
+                    registeredApi.getEventManager().unregisterListener(listenerHandle);
+                } catch (Exception e) {
+                    Logger.logConsole(LogType.ERROR, "(LightAntiCheat-Plus) Failed to unregister stale PacketEvents listener: " + e.getMessage());
+                }
+                // clear stale handle; registeredApi will be overwritten on success, nulled on failure
+                listenerHandle = null;
+                registeredApi = null;
+                started = false;
             }
             PacketListenerCommon listener = new PacketListenerAbstract(PacketListenerPriority.LOWEST) {
                 @Override
@@ -100,9 +117,17 @@ public final class PacketEventsInputProvider implements LACInputProvider {
                     }
                 }
             };
-            PacketListenerCommon registered = PacketEvents.getAPI().getEventManager().registerListener(listener);
-            listenerHandle = registered != null ? registered : listener;
-            started = true;
+            try {
+                final PacketListenerCommon registered = api.getEventManager().registerListener(listener);
+                listenerHandle = registered != null ? registered : listener;
+                registeredApi = api;
+                started = true;
+            } catch (Exception e) {
+                listenerHandle = null;
+                registeredApi = null;
+                started = false;
+                throw new IllegalStateException("Failed to register LightAntiCheat PacketEvents listener: " + e.getMessage(), e);
+            }
         }
     }
 
@@ -114,17 +139,17 @@ public final class PacketEventsInputProvider implements LACInputProvider {
     @Override
     public void close() {
         synchronized (lock) {
-            if (!started) {
-                return;
-            }
+            PacketEventsAPI<?> api = registeredApi;
             PacketListenerCommon handle = listenerHandle;
+            registeredApi = null;
             listenerHandle = null;
             started = false;
             tracker.clear();
-            if (handle != null) {
+            if (api != null && handle != null) {
                 try {
-                    PacketEvents.getAPI().getEventManager().unregisterListener(handle);
-                } catch (Exception ignored) {
+                    api.getEventManager().unregisterListener(handle);
+                } catch (Exception e) {
+                    Logger.logConsole(LogType.ERROR, "(LightAntiCheat-Plus) Failed to unregister PacketEvents listener: " + e.getMessage());
                 }
             }
         }

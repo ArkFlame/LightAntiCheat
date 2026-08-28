@@ -13,8 +13,9 @@ import me.vekster.lightanticheat.util.config.placeholder.PlaceholderConvertor;
 import me.vekster.lightanticheat.util.detection.CheckUtil;
 import me.vekster.lightanticheat.util.detection.LeanTowards;
 import me.vekster.lightanticheat.util.hook.server.folia.FoliaUtil;
+import me.vekster.lightanticheat.util.command.RuntimeCommandDispatcher;
+import me.vekster.lightanticheat.util.logger.LogType;
 import me.vekster.lightanticheat.util.logger.Logger;
-import me.vekster.lightanticheat.util.scheduler.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -24,9 +25,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ViolationHandler implements Listener {
@@ -221,13 +224,17 @@ public class ViolationHandler implements Listener {
             }
         }
 
-        if (checkSetting.punishable &&
-                checkSetting.punishmentCommands != null && !checkSetting.punishmentCommands.isEmpty()) {
-            Scheduler.runTask(false, () -> {
-                for (String command : checkSetting.punishmentCommands)
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            PlaceholderConvertor.colorize(PlaceholderConvertor.swapAll(command, checkSetting, event.getPlayer(), lacPlayer), true));
-            });
+        if (checkSetting.punishable && checkSetting.punishmentCommands != null && !checkSetting.punishmentCommands.isEmpty()) {
+            final List<String> renderedCommands = new ArrayList<>(checkSetting.punishmentCommands.size());
+            for (String command : checkSetting.punishmentCommands) {
+                final String rendered = PlaceholderConvertor.renderPunishmentCommand(command, checkSetting, event.getPlayer(), lacPlayer);
+                if (rendered == null || rendered.trim().isEmpty()) {
+                    Logger.logConsole(LogType.ERROR, "(LightAntiCheat-Plus) Skipped empty punishment command for " + event.getPlayer().getName() + " (" + checkSetting.name.title + ")");
+                    continue;
+                }
+                renderedCommands.add(rendered);
+            }
+            RuntimeCommandDispatcher.dispatchConsoleBatch(renderedCommands, event.getPlayer().getName(), checkSetting.name.title);
         }
 
         lacPlayer.violations = new PlayerViolations();

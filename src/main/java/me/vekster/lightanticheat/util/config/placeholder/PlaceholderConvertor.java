@@ -130,4 +130,68 @@ public class PlaceholderConvertor {
         return text;
     }
 
+    public static String renderPunishmentCommand(final String command, final CheckSetting checkSetting, final Player player, final LACPlayer lacPlayer) {
+        Objects.requireNonNull(command, "command");
+        Objects.requireNonNull(checkSetting, "checkSetting");
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(lacPlayer, "lacPlayer");
+        String rendered = swapAll(command, checkSetting, player, lacPlayer);
+        rendered = colorize(rendered, true);
+        rendered = normalizeLegacyVanillaKickTarget(rendered, player.getName());
+        rendered = normalizeBukkitDispatchCommandLine(rendered);
+        return rendered;
+    }
+
+    static String normalizeBukkitDispatchCommandLine(final String renderedCommand) {
+        if (renderedCommand == null) return "";
+        String trimmed = renderedCommand.trim();
+        if (trimmed.isEmpty()) return "";
+        if (trimmed.charAt(0) == '/') {
+            trimmed = trimmed.substring(1).trim();
+        }
+        return trimmed;
+    }
+
+    static String normalizeLegacyVanillaKickTarget(final String renderedCommand, final String playerName) {
+        if (renderedCommand == null) return "";
+        if (renderedCommand.isEmpty()) return "";
+        if (playerName == null || playerName.isEmpty()) return renderedCommand;
+        final int len = renderedCommand.length();
+        int labelStart = -1;
+        for (int i = 0; i < len; i++) {
+            if (renderedCommand.charAt(i) != ' ') {
+                labelStart = i;
+                break;
+            }
+        }
+        if (labelStart == -1) return renderedCommand;
+        int labelEnd = len;
+        for (int i = labelStart; i < len; i++) {
+            if (renderedCommand.charAt(i) == ' ') {
+                labelEnd = i;
+                break;
+            }
+        }
+        final String label = renderedCommand.substring(labelStart, labelEnd);
+        if (!label.equalsIgnoreCase("kick") && !label.equalsIgnoreCase("minecraft:kick")) return renderedCommand;
+        int firstArgStart = -1;
+        for (int i = labelEnd; i < len; i++) {
+            if (renderedCommand.charAt(i) != ' ') {
+                firstArgStart = i;
+                break;
+            }
+        }
+        if (firstArgStart == -1) return renderedCommand;
+        int firstArgEnd = len;
+        for (int i = firstArgStart; i < len; i++) {
+            if (renderedCommand.charAt(i) == ' ') {
+                firstArgEnd = i;
+                break;
+            }
+        }
+        final String firstArg = renderedCommand.substring(firstArgStart, firstArgEnd);
+        if (!firstArg.equals("*" + playerName)) return renderedCommand;
+        return renderedCommand.substring(0, firstArgStart) + playerName + renderedCommand.substring(firstArgStart + firstArg.length());
+    }
+
 }

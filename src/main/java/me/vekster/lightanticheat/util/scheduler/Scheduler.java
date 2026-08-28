@@ -79,6 +79,13 @@ public class Scheduler {
         }
     }
 
+    public static void globalThread(final Runnable task) {
+        if (task == null) {
+            throw new IllegalArgumentException("task must not be null");
+        }
+        SCHEDULER.runTask(false, task);
+    }
+
     public static void schedule(TimerTask task, long delayInMs) {
         TIMER.schedule(task, delayInMs);
     }
